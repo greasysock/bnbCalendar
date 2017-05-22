@@ -27,8 +27,13 @@ def import_wizard(ical, teamwork_api):
     if selected_event + 1 > events.__len__():
         print('new event wizard, new selected_event setting')
         sys.exit(2)
-
-    return -1
+    import_status = cal_db.append_ical(ical, projects[selected_project][0],events[selected_event][0], events[selected_event][1])
+    if import_status == 1:
+        print('Import Success!')
+        cal_db.save()
+    elif import_status == -1:
+        print('Import Failure!')
+    sys.exit(2)
 def main():
     parser = argparse.ArgumentParser(prog=__title__)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s {}'.format(__version__))
