@@ -13,13 +13,20 @@ except KeyError:
     sys.exit(2)
 def import_wizard(ical, teamwork_api):
     print('WARNING: New project feature not added.')
+    print('WARNING: New event feature not added.')
     ical_parse = icalparser.Connect(ical)
     cal_db = calendardb.MainFile(default_calendar)
     teamwork_api.set_company(cal_db.get_company_id())
     projects = teamwork_api.get_projects()
     selected_project = prompts.project_selection(teamwork_api.get_projects())
-    if selected_project > projects.__len__():
+    if selected_project + 1 > projects.__len__():
         print('new project wizard, new selected_project setting')
+        sys.exit(2)
+    events = teamwork_api.get_calendar_events()
+    selected_event = prompts.event_selection(events)
+    if selected_event + 1 > events.__len__():
+        print('new event wizard, new selected_event setting')
+        sys.exit(2)
 
     return -1
 def main():

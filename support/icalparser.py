@@ -1,5 +1,4 @@
 import requests
-from icalendar import Calendar, Event
 from support import version
 
 __author__ = version.get_author()
@@ -8,7 +7,7 @@ __title__ = version.get_title()
 
 def get_ical(link):
     head = {'user-agent' : '{}/{}'.format(__title__, __version__)}
-    r = requests.get(link, headers=head)
+    r = requests.get(link, headers=head, timeout=10)
     return r.content.decode('iso-8859-1')
 
 class Connect():

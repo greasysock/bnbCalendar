@@ -5,8 +5,8 @@ __author__ = version.get_author()
 __version__ = version.get_version()
 __title__ = version.get_title()
 
-api_key = 'twp_E9bQI6vc3LNRIfyNHwhCXxtkZDly'
 site = 'https://bnbwithme.teamwork.com'
+
 class Connect():
     def __init__(self, api_key, site=site):
         self.__api_key = api_key
@@ -33,16 +33,16 @@ class Connect():
         YYYYMMDD --> Format
         '''
         return time.strftime('%Y%m%d', time.localtime(date))
-    def __get_calendarevents(self, startdate, enddate):
+    def __get_calendarentries(self, startdate, enddate):
         site = self.__url_build('calendarevents.json')
         fix_startdate = self.__epochtodate(startdate)
         fix_enddate = self.__epochtodate(enddate)
         payload = {'startdate':fix_startdate, 'endDate':fix_enddate}
         r = requests.get(site, params=payload, auth=(self.__api_key, 'pass'), headers=self.__header)
         return r.json()
-    def get_calendarevents(self, startdate, enddate):
+    def get_calendarentries(self, startdate, enddate):
         if self.__connection:
-            return self.__get_calendarevents(startdate, enddate)
+            return self.__get_calendarentries(startdate, enddate)
         else:
             return -1
     def __post_calendarevent(self):
@@ -66,7 +66,36 @@ class Connect():
             return self.__get_projects()
         else:
             return -1
+    def __get_users_on_project(self, project_id):
+        site = self.__url_build('projects/{}/people.json'.format(project_id))
+        r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+        users_pack = r.json()
+        out_list = list()
+        for user in users_pack['people']:
+            out_tup = (user['id'], )
+        return users_pack
+    def get_users_on_project(self, project_id):
+        if self.__connection:
+            return self.__get_users_on_project(project_id)
+        else:
+            return -1
+    def __get_calendar_events(self):
+        site = self.__url_build('eventtypes.json')
+        r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+        events_pack = r.json()
+        out_list = list()
+        for event in events_pack['eventtypes']:
+            out_tup = (event['id'], event['name'], event['color'])
+            out_list.append(out_tup)
+        return out_list
+    def get_calendar_events(self):
+        if self.__connection:
+            return self.__get_calendar_events()
+        else:
+            return -1
 
 if __name__ == '__main__':
+    import os
+    api_key = os.environ['teamwork_api']
     connection = Connect(api_key)
-    print(connection.get_calendarevents(1492622538,1495214547))
+    print(connection.get_calendar_events())

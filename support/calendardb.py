@@ -50,11 +50,11 @@ def createdb(file_name, company_id=131775):
     c.execute('''CREATE TABLE config
         ('company_id' id)''')
     c.execute('''CREATE TABLE userinfo
-    ('username' name, 'userid' id)''')
+    ('username' name, 'userid' id, 'project id' id)''')
     c.execute('''CREATE TABLE projects
-    ('project id' id, 'userid' id, 'project' TEXT)''')
+    ('project id' id, 'project' TEXT)''')
     c.execute('''CREATE TABLE listings
-    ('project id' id, 'ical link' text)''')
+    ('project id' id, 'ical link' text, 'event type' id)''')
     c.execute('''CREATE TABLE entries
     ('listing id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT)''')
     conn.commit()
