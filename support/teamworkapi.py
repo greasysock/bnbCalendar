@@ -10,6 +10,7 @@ site = 'https://bnbwithme.teamwork.com'
 class Connect():
     def __init__(self, api_key, site=site):
         self.__api_key = api_key
+        self.__default_company = None
         self.__site = site
         self.__header = {'user-agent':'{}/{}'.format(__title__,__version__)}
         self.__connection = self.test()
@@ -25,6 +26,8 @@ class Connect():
             rjson = {'STATUS':'FAIL'}
         working = rjson['STATUS'] == 'OK'
         return working
+    def set_company(self, company):
+        self.__default_company = company
     def __epochtodate(self, date):
         '''
         YYYYMMDD --> Format
@@ -49,6 +52,21 @@ class Connect():
             return self.__post_calendarevent()
         else:
             return -1
+    def __get_projects(self):
+        site = self.__url_build('companies/{}/projects.json'.format(self.__default_company))
+        r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+        projects_pack = r.json()
+        out_list = list()
+        for project in projects_pack['projects']:
+            out_tup = (project['id'], project['name'])
+            out_list.append(out_tup)
+        return out_list
+    def get_projects(self):
+        if self.__connection:
+            return self.__get_projects()
+        else:
+            return -1
 
-connection = Connect(api_key)
-print(connection.get_calendarevents(1492622538,1495214547))
+if __name__ == '__main__':
+    connection = Connect(api_key)
+    print(connection.get_calendarevents(1492622538,1495214547))

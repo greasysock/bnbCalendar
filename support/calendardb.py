@@ -15,7 +15,7 @@ class MainFile():
     def close(self):
         self.__conn.close()
     def testdb(self):
-        valid_db = ['config', 'userinfo', 'listings', 'entries']
+        valid_db = ['config', 'userinfo', 'projects', 'listings', 'entries']
         test_db = list()
         for table_name in self.__c.execute("SELECT name FROM sqlite_master WHERE type='table'"):
             for table in table_name:
@@ -29,7 +29,7 @@ class MainFile():
         try:
             company_id = str()
             for client_data in self.__c.execute('SELECT * FROM config'):
-                company_id = client_data
+                company_id = client_data[0]
             if company_id == str():
                 return -1
             else:
@@ -51,8 +51,10 @@ def createdb(file_name, company_id=131775):
         ('company_id' id)''')
     c.execute('''CREATE TABLE userinfo
     ('username' name, 'userid' id)''')
+    c.execute('''CREATE TABLE projects
+    ('project id' id, 'userid' id, 'project' TEXT)''')
     c.execute('''CREATE TABLE listings
-    ('listing id' id, 'userid' id, 'listing' TEXT, 'ical' TEXT)''')
+    ('project id' id, 'ical link' text)''')
     c.execute('''CREATE TABLE entries
     ('listing id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT)''')
     conn.commit()

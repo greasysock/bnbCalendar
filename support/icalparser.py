@@ -30,6 +30,13 @@ class Connect():
                 endidx = idx+startidx
                 break
         return endidx
+    def get_type(self):
+        if 'admin.vrbo.com' in self.__link:
+            return 1
+        elif 'airbnb.com' in self.__link:
+            return 0
+        else:
+            return -1
     def test_cal(self):
         try:
             if self.get_raw_events_list()[0] == 'BEGIN:VCALENDAR':
@@ -67,8 +74,11 @@ class Connect():
                 event_list.append(self.__event_clean(raw_list[event_start:event_end]))
         return event_list
 def test_ical(link):
-    test_con = Connect(link)
-    return test_con.test_cal()
+    try:
+        test_con = Connect(link)
+        return test_con.test_cal()
+    except:
+        return -1
 if __name__ == "__main__":
     CalendarE = Connect('http://admin.vrbo.com/icalendar/bd6b684b3f054055a440a5e51df8bac1.ics')
     events = CalendarE.get_events()

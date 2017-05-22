@@ -1,12 +1,27 @@
-import sys, argparse
-from support import calendardb, version, icalparser
+import sys, argparse, os
+from support import calendardb, version, icalparser, teamworkapi, prompts
 
 __title__ = version.get_title()
 __author__ = version.get_author()
 __version__ = version.get_version()
 
 default_calendar = 'calendar.db'
+try:
+    teamwork_api = os.environ['teamwork_api']
+except KeyError:
+    print('ERROR: \'teamwork_api\' env variable is missing.')
+    sys.exit(2)
+def import_wizard(ical, teamwork_api):
+    print('WARNING: New project feature not added.')
+    ical_parse = icalparser.Connect(ical)
+    cal_db = calendardb.MainFile(default_calendar)
+    teamwork_api.set_company(cal_db.get_company_id())
+    projects = teamwork_api.get_projects()
+    selected_project = prompts.project_selection(teamwork_api.get_projects())
+    if selected_project > projects.__len__():
+        print('new project wizard, new selected_project setting')
 
+    return -1
 def main():
     parser = argparse.ArgumentParser(prog=__title__)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s {}'.format(__version__))
@@ -25,12 +40,15 @@ def main():
     elif args.new:
         db_present = calendardb.testdb(default_calendar)
         ics_test = icalparser.test_ical(args.new)
-        if db_present == 1 and ics_test == 1:
-            print('running add wizard')
+        test_tw_api = teamworkapi.Connect(teamwork_api)
+        if db_present == 1 and ics_test == 1 and test_tw_api.test():
+            import_wizard(args.new, test_tw_api)
         if db_present == -1:
             print('ERROR: Database not present or invalid.')
         if ics_test == -1:
             print('ERROR: Invalid .ics link provided.')
+        if not test_tw_api.test():
+            print('ERROR: Invalid api key or connection error.')
         sys.exit(2)
 if __name__ == "__main__":
     main()
