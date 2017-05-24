@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import sys, argparse, os
 from support import calendardb, version, icalparser, teamworkapi, prompts
 
@@ -51,7 +52,11 @@ def main():
         sys.exit(2)
     elif args.new:
         db_present = calendardb.testdb(default_calendar)
-        ics_test = icalparser.test_ical(args.new)
+        calendar = calendardb.MainFile(default_calendar)
+        if not calendar.get_ical_present(args.new):
+            ics_test = icalparser.test_ical(args.new)
+        elif calendar.get_ical_present(args.new):
+            ics_test = -2
         test_tw_api = teamworkapi.Connect(teamwork_api)
         if db_present == 1 and ics_test == 1 and test_tw_api.test():
             import_wizard(args.new, test_tw_api)
@@ -59,6 +64,8 @@ def main():
             print('ERROR: Database not present or invalid.')
         if ics_test == -1:
             print('ERROR: Invalid .ics link provided.')
+        elif ics_test == -2:
+            print('ERROR: .ics provided already exists in database.')
         if not test_tw_api.test():
             print('ERROR: Invalid api key or connection error.')
         sys.exit(2)

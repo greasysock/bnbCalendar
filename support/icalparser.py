@@ -1,4 +1,4 @@
-import requests
+import requests, time, datetime
 from support import version
 
 __author__ = version.get_author()
@@ -13,8 +13,8 @@ def get_ical(link):
 class Connect():
     def __init__(self, link):
         self.__link = link
-        self.__raw_ical = repr(get_ical(self.__link))
-#        self.__raw_ical = repr(open('test.ics', 'rb').read().decode('utf-8'))
+#        self.__raw_ical = repr(get_ical(self.__link))
+        self.__raw_ical = repr(open('test.ics', 'rb').read().decode('utf-8'))
     def __get_raw__events(self):
             for event in str(self.__raw_ical).split('\\'):
                 if event != '' and event != 'n':
@@ -63,15 +63,57 @@ class Connect():
         for entry in self.__get_raw__events():
             event_list.append(entry)
         return event_list
-    def get_events(self):
-        event_list = list()
+    def get_events_abb(self):
+        return -1
+    def __recover_value(self, extract_line ,recover_tup, seperator=':'):
+        out_dict = dict()
+        out_tup = list()
+        for entry in extract_line:
+            entry_split = entry.split(seperator)
+            for idx, match in enumerate(recover_tup):
+                if entry_split[0] == match:
+                    out_tup.insert(idx,entry_split[1])
+                    out_dict[match] = entry_split[1]
+
+        return tuple(out_tup)
+    def __date_clean(self, date):
+        year = int(date[0:4])
+        month = int(date[4:6])
+        day = int(date[6:8])
+        seconds = date[9:]
+        hour = int(int(seconds[:-1]) / 10000)
+        dt = datetime.datetime(year, month, day, hour)
+        return time.mktime(dt.timetuple())
+    def __vrbo_name_clean(self, name):
+        filter_name = name [11:]
+        if filter_name != '':
+            return filter_name
+        else:
+            return name
+    def get_events_vrbo(self):
+        out_list = list()
+        recover = ('DTSTART', 'DTEND', 'SUMMARY')
+        for raw_event in self.__iter_events_raw():
+            event_dict = dict()
+            raw_values = self.__recover_value(raw_event, recover)
+            event_dict['start'] = self.__date_clean(raw_values[0])
+            event_dict['end'] = self.__date_clean(raw_values[1])
+            event_dict['guest'] = self.__vrbo_name_clean(raw_values[2])
+            out_list.append(event_dict)
+            print(event_dict)
+        return out_list
+    def __iter_events_raw(self):
         raw_list = self.get_raw_events_list()
         for idx, entry in enumerate(self.__get_raw__events()):
             if entry == 'BEGIN:VEVENT':
                 event_start = idx + 1
                 event_end = self.__get_end_eventidx(event_start)
-                event_list.append(self.__event_clean(raw_list[event_start:event_end]))
-        return event_list
+                yield self.__event_clean(raw_list[event_start:event_end])
+    def get_events(self):
+        if self.get_type() == 0:
+            return self.get_events_abb()
+        elif self.get_type() == 1:
+            return self.get_events_vrbo()
 def test_ical(link):
     try:
         test_con = Connect(link)
@@ -81,7 +123,3 @@ def test_ical(link):
 if __name__ == "__main__":
     CalendarE = Connect('http://admin.vrbo.com/icalendar/bd6b684b3f054055a440a5e51df8bac1.ics')
     events = CalendarE.get_events()
-    for event in events:
-        print('-------------------------------')
-        for entry in event:
-            print(entry)
