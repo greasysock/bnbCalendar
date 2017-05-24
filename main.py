@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys, argparse, os
+import sys, argparse, os, sqlite3
 from support import calendardb, version, icalparser, teamworkapi, prompts
 
 __title__ = version.get_title()
@@ -53,9 +53,12 @@ def main():
     elif args.new:
         db_present = calendardb.testdb(default_calendar)
         calendar = calendardb.MainFile(default_calendar)
-        if not calendar.get_ical_present(args.new):
-            ics_test = icalparser.test_ical(args.new)
-        elif calendar.get_ical_present(args.new):
+        try:
+            if not calendar.get_ical_present(args.new):
+                ics_test = icalparser.test_ical(args.new)
+            elif calendar.get_ical_present(args.new):
+                ics_test = -2
+        except sqlite3.OperationalError:
             ics_test = -2
         test_tw_api = teamworkapi.Connect(teamwork_api)
         if db_present == 1 and ics_test == 1 and test_tw_api.test():
