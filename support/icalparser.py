@@ -11,10 +11,12 @@ def get_ical(link):
     return r.content.decode('iso-8859-1')
 
 class Connect():
-    def __init__(self, link):
+    def __init__(self, link, test=False):
         self.__link = link
-#        self.__raw_ical = repr(get_ical(self.__link))
-        self.__raw_ical = repr(open('test.ics', 'rb').read().decode('utf-8'))
+        if not test:
+            self.__raw_ical = repr(get_ical(self.__link))
+        elif test:
+            self.__raw_ical = repr(open('test.ics', 'rb').read().decode('utf-8'))
     def __get_raw__events(self):
             for event in str(self.__raw_ical).split('\\'):
                 if event != '' and event != 'n':
@@ -121,5 +123,5 @@ def test_ical(link):
     except:
         return -1
 if __name__ == "__main__":
-    CalendarE = Connect('http://admin.vrbo.com/icalendar/bd6b684b3f054055a440a5e51df8bac1.ics')
+    CalendarE = Connect('http://admin.vrbo.com/icalendar/bd6b684b3f054055a440a5e51df8bac1.ics', test=True)
     events = CalendarE.get_events()
