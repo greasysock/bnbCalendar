@@ -26,21 +26,25 @@ class MainFile():
             return 1
         else:
             return -1
-    def get_company_id(self):
+    def get_from_config(self, idx):
         try:
-            company_id = str()
+            config = str()
             for client_data in self.__c.execute('SELECT * FROM config'):
-                company_id = client_data[0]
-            if company_id == str():
+                config = client_data[idx]
+            if config == str():
                 return -1
             else:
-                return company_id
+                return config
         except sqlite3.OperationalError:
             return -1
-    def set_company_id(self, company_id):
+    def get_company_id(self):
+        return self.get_from_config(0)
+    def get_cutoff(self):
+        return self.get_from_config(1)
+    def set_company_id_cutoff(self, company_id, cutoff):
         cur_id = self.get_company_id()
         if cur_id == -1:
-            self.__c.execute("INSERT INTO config VALUES ('{}')".format(company_id))
+            self.__c.execute("INSERT INTO config VALUES ('{}, {}')".format(company_id, cutoff))
             return 1
         else:
             return -1
@@ -91,11 +95,11 @@ class randgen():
         int2 = randint(0, self.__alphlen)
         int3 = randint(0, self.__alphlen)
         return '{}{}{}'.format(self.__alph[int1], self.__alph[int2], self.__alph[int3])
-def createdb(file_name, company_id=131775):
+def createdb(file_name, company_id=131775, cutoff_date=1495584000):
     conn = sqlite3.connect(file_name)
     c = conn.cursor()
     c.execute('''CREATE TABLE config
-        ('company_id' id)''')
+        ('company_id' id, 'cutoff_date' date)''')
     c.execute('''CREATE TABLE listings
     ('ical id' id, 'project id' id, 'ical link' text, 'event id' id, 'event name' text)''')
     c.execute('''CREATE TABLE entries
@@ -103,7 +107,7 @@ def createdb(file_name, company_id=131775):
     conn.commit()
     conn.close()
     new_file = MainFile(file_name)
-    new_file.set_company_id(company_id)
+    new_file.set_company_id_cutoff(company_id, cutoff_date)
     new_file.save()
     return new_file
 def testdb(file_name):

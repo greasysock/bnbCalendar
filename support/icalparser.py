@@ -16,7 +16,7 @@ class Connect():
         if not test:
             self.__raw_ical = repr(get_ical(self.__link))
         elif test:
-            self.__raw_ical = repr(open('test.ics', 'rb').read().decode('utf-8'))
+            self.__raw_ical = repr(open('abbtest.ics', 'rb').read().decode('utf-8'))
     def __get_raw__events(self):
             for event in str(self.__raw_ical).split('\\'):
                 if event != '' and event != 'n':
@@ -65,9 +65,23 @@ class Connect():
         for entry in self.__get_raw__events():
             event_list.append(entry)
         return event_list
-    def get_events_abb(self):
+    def get_to_date(self, epoch_time):
         return -1
-    def __recover_value(self, extract_line ,recover_tup, seperator=':'):
+    def get_events_abb(self):
+        out_list = list()
+        recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY', 'PHONE', 'EMAIL')
+        for raw_event in self.__iter_events_raw():
+            raw_values = self.__recover_value(raw_event, recover)
+            event_dict = dict()
+            event_dict['start'] = self.__abb_date_clean(raw_values[0])
+            event_dict['end'] = self.__abb_date_clean(raw_values[1])
+            event_dict['guest'] = self.__abb_name_clean(raw_values[2])
+            if raw_values.__len__() == recover.__len__():
+                event_dict['phone'] = raw_values[3]
+                event_dict['email'] = raw_values[4]
+            out_list.append(event_dict)
+        return out_list
+    def __recover_value(self, extract_line ,recover_tup, seperator=':', back_seperator=';'):
         out_dict = dict()
         out_tup = list()
         for entry in extract_line:
@@ -86,12 +100,22 @@ class Connect():
         hour = int(int(seconds[:-1]) / 10000)
         dt = datetime.datetime(year, month, day, hour)
         return time.mktime(dt.timetuple())
+    def __abb_date_clean(self, date):
+        year = int(date[0:4])
+        month = int(date[4:6])
+        day = int(date[6:8])
+        dt = datetime.datetime(year, month, day)
+        print(time.strftime("%z", time.gmtime()))
+        print('{}/{}/{}'.format(month, day, year))
+        return time.mktime(dt.timetuple())
     def __vrbo_name_clean(self, name):
         filter_name = name [11:]
         if filter_name != '':
             return filter_name
         else:
             return name
+    def __abb_name_clean(self, name):
+        return name
     def get_events_vrbo(self):
         out_list = list()
         recover = ('DTSTART', 'DTEND', 'SUMMARY')
@@ -102,7 +126,6 @@ class Connect():
             event_dict['end'] = self.__date_clean(raw_values[1])
             event_dict['guest'] = self.__vrbo_name_clean(raw_values[2])
             out_list.append(event_dict)
-            print(event_dict)
         return out_list
     def __iter_events_raw(self):
         raw_list = self.get_raw_events_list()
@@ -123,5 +146,5 @@ def test_ical(link):
     except:
         return -1
 if __name__ == "__main__":
-    CalendarE = Connect('http://admin.vrbo.com/icalendar/bd6b684b3f054055a440a5e51df8bac1.ics', test=True)
+    CalendarE = Connect('https://www.airbnb.com/calendar/ical/11651866.ics?s=51fe1a87d1b0a8294164d35086888b5c', test=True)
     events = CalendarE.get_events()

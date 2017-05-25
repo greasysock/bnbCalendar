@@ -59,7 +59,7 @@ def main():
             elif calendar.get_ical_present(args.new):
                 ics_test = -2
         except sqlite3.OperationalError:
-            ics_test = 1
+            ics_test = -1
         test_tw_api = teamworkapi.Connect(teamwork_api)
         if db_present == 1 and ics_test == 1 and test_tw_api.test():
             import_wizard(args.new, test_tw_api)
