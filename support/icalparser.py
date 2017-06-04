@@ -66,7 +66,25 @@ class Connect():
             event_list.append(entry)
         return event_list
     def get_to_date(self, epoch_time):
-        return -1
+        try:
+            out_list = list()
+            for event in self.__events:
+                if event['start'] >= epoch_time:
+                    out_list.append(event)
+            return out_list
+        except AttributeError:
+            self.__events = self.get_events()
+            return self.get_to_date(epoch_time)
+    def get_to_largest_date(self):
+        try:
+            date_list = list()
+            for event in self.__events:
+                date_list.append(event['end'])
+
+            return max(date_list)
+        except AttributeError:
+            self.__events = self.get_events()
+            return self.get_to_largest_date()
     def get_events_abb(self):
         out_list = list()
         recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY', 'PHONE', 'EMAIL')
@@ -105,8 +123,6 @@ class Connect():
         month = int(date[4:6])
         day = int(date[6:8])
         dt = datetime.datetime(year, month, day)
-        print(time.strftime("%z", time.gmtime()))
-        print('{}/{}/{}'.format(month, day, year))
         return time.mktime(dt.timetuple())
     def __vrbo_name_clean(self, name):
         filter_name = name [11:]
@@ -148,3 +164,5 @@ def test_ical(link):
 if __name__ == "__main__":
     CalendarE = Connect('https://www.airbnb.com/calendar/ical/11651866.ics?s=51fe1a87d1b0a8294164d35086888b5c', test=True)
     events = CalendarE.get_events()
+    CalendarE.get_to_date(1495584000)
+    print(CalendarE.get_to_largest_date())

@@ -72,5 +72,7 @@ def main():
         if not test_tw_api.test():
             print('ERROR: Invalid api key or connection error.')
         sys.exit(2)
+    elif args.run:
+        print('run loop activated!!!!!!')
 if __name__ == "__main__":
     main()
