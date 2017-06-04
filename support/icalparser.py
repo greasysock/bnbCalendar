@@ -11,7 +11,7 @@ def get_ical(link):
     return r.content.decode('iso-8859-1')
 
 class Connect():
-    def __init__(self, link, test=False):
+    def __init__(self, link, test=True):
         self.__link = link
         if not test:
             self.__raw_ical = repr(get_ical(self.__link))

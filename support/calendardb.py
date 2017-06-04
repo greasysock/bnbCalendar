@@ -1,10 +1,123 @@
-from support import version
+from support import version, icalparser
 
 __author__ = version.get_author()
 __version__ = version.get_version()
 
 from random import randint
 import sqlite3
+
+
+'''
+Class: icalObject
+Description: wraps parsed ical data for easier implementation
+'''
+
+class icalObject():
+    def __init__(self, listing, cutoff):
+        self.__listing = listing
+        self.__cutoff = cutoff
+    def generate(self):
+        self.__parser = icalparser.Connect(self.get_link())
+        return -1
+    def get_link(self):
+        return self.__listing[2]
+    def get_id(self):
+        return self.__listing[0]
+    def get_projectid(self):
+        return self.__listing[1]
+    def get_eventid(self):
+        return self.__listing[3]
+    def get_name(self):
+        return self.__listing[4]
+    def get_type(self):
+        return self.__parser.get_type()
+    def get_events(self):
+        try:
+            events = self.__parser.get_to_date(self.__cutoff)
+            out_list = list()
+            for event in events:
+                out_list.append(entry_icalObject(event))
+            return out_list
+        except AttributeError:
+            self.generate()
+            events = self.__parser.get_to_date(self.__cutoff)
+            out_list = list()
+            for event in events:
+                out_list.append(entry_icalObject(event))
+            return out_list
+
+'''
+Class: entryObject
+Description: wraps entry object from database for easier access.
+'''
+
+class entryObject():
+    def __init__(self, entry):
+        self.__entry = entry
+    def get_ical_id(self):
+        return self.__entry[0]
+    def get_start(self):
+        return self.__entry[1]
+    def get_end(self):
+        return self.__entry[2]
+    def get_amount(self):
+        return self.__entry[3]
+    def get_guest(self):
+        return self.__entry[4]
+    def get_service(self):
+        return self.__entry[5]
+    def get_email(self):
+        return self.__entry[6]
+    def get_phone(self):
+        return self.__entry[7]
+    def get_posted(self):
+        return self.__entry[8]
+    def get_delete(self):
+        return self.__entry[9]
+
+'''
+Class: entryparentObject
+Description: Adds parent data to entryObject class
+'''
+
+class entryparentObject(entryObject):
+    def __init__(self, entry, parent):
+        entryObject.__init__(self, entry)
+        self.__parent = parent
+    def get_project_id(self):
+        return self.__parent[1]
+    def get_event_id(self):
+        return self.__parent[3]
+    def get_event_name(self):
+        return self.__parent[4]
+
+'''
+Class: entry_icalObject
+Description: Wraps individual ical entry for easier manipulation.
+'''
+
+class entry_icalObject():
+    def __init__(self, entry_candidate):
+        self.__entry = entry_candidate
+    def get_start(self):
+        return self.__entry['start']
+    def get_end(self):
+        return self.__entry['end']
+    def get_guest(self):
+        return self.__entry['guest']
+    def get_phone(self):
+        try:
+            return self.__entry['phone']
+        except KeyError:
+            return ''
+    def get_email(self):
+        try:
+            return self.__entry['email']
+        except KeyError:
+            return ''
+    def get_amount(self):
+        return 0
+
 
 class MainFile():
     def __init__(self, db_file):
@@ -51,6 +164,21 @@ class MainFile():
     def iter_listings(self):
         for listing in self.__c.execute("SELECT * FROM listings"):
             yield listing
+    def iter_entries(self):
+        for entry in self.__c.execute("SELECT * FROM entries"):
+            yield entry
+    def get_listing(self, id, idx=0):
+        out_listing = None
+        for listing in self.iter_listings():
+            if listing[idx] == id:
+                out_listing = listing
+        if out_listing != None:
+            return out_listing
+        else:
+            return -1
+    def iter_entries_objects(self):
+        for entry in self.iter_entries():
+            yield entryObject(entry)
     def get_listings(self):
         out_list = list()
         for listing in self.iter_listings():
@@ -61,6 +189,50 @@ class MainFile():
         for ical_check in self.iter_listings():
             if ical_check[idx] == ical_link: present = True
         return present
+    def get_entry_present(self, entry_test, parent_ical):
+        parentId = parent_ical.get_id()
+        present = 0
+        for entry in self.iter_entries():
+            entry_obj = entryObject(entry)
+            if entry_obj.get_ical_id() == parentId:
+                if entry_test.get_start() == entry_obj.get_start() and entry_test.get_end() == entry_obj.get_end() and entry_test.get_guest() == entry_obj.get_guest():
+                    present += 1
+        if present == 1:
+            return True
+        elif present == 0:
+            return False
+    def append_entry(self, entry, parent_ical):
+        ical_id = parent_ical.get_id()
+        start_date = entry.get_start()
+        leave_date = entry.get_end()
+        amount = entry.get_amount()
+        guest = entry.get_guest()
+        service = parent_ical.get_type()
+        email = entry.get_email()
+        phone = entry.get_phone()
+        print('ICAL_ID = {} S = {} E = {}'.format(ical_id, start_date, leave_date))
+        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0))
+    def mark_remove(self, entry, parent_ical):
+        return -1
+    def remove_entry(self, entry, parent_ical):
+        return -1
+    def get_pending_teamwork_actions(self):
+        pending_additions = 0
+        pending_removals = 0
+        for entry in self.iter_entries_objects():
+            if entry.get_delete() == 1:
+                pending_removals += 1
+            if entry.get_posted() == 0:
+                pending_additions += 1
+        return pending_additions, pending_removals
+    def sync_ical(self):
+        for listing in self.iter_listings():
+            ical_listing = icalObject(listing, self.get_cutoff())
+            ical_events = ical_listing.get_events()
+            for ical_event in ical_events:
+                if not self.get_entry_present(ical_event, ical_listing):
+                    self.append_entry(ical_event, ical_listing)
+        self.save()
     def get_unique_random(self):
         numgen = randgen()
         match = True
@@ -103,7 +275,7 @@ def createdb(file_name, company_id=131775, cutoff_date=1495584000):
     c.execute('''CREATE TABLE listings
     ('ical id' id, 'project id' id, 'ical link' text, 'event id' id, 'event name' text)''')
     c.execute('''CREATE TABLE entries
-    ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT)''')
+    ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT, 'delete' BYTE)''')
     conn.commit()
     conn.close()
     new_file = MainFile(file_name)
