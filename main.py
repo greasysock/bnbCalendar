@@ -75,5 +75,5 @@ def main():
     elif args.run:
         print('run loop activated!!!!!!')
 if __name__ == "__main__":
-    os.chdir(__file__)
+    os.chdir(os.path.realpath(__file__))
     main()
