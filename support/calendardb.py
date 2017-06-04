@@ -44,7 +44,7 @@ class MainFile():
     def set_company_id_cutoff(self, company_id, cutoff):
         cur_id = self.get_company_id()
         if cur_id == -1:
-            self.__c.execute("INSERT INTO config VALUES ('{}, {}')".format(company_id, cutoff))
+            self.__c.execute("INSERT INTO config VALUES ('{}', '{}')".format(company_id, cutoff))
             return 1
         else:
             return -1
