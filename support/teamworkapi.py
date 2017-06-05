@@ -30,9 +30,9 @@ class Connect():
         self.__default_company = company
     def __epochtodate(self, date):
         '''
-        YYYYMMDD --> Format
+        YYYY-MM-DDThhmmss --> Format
         '''
-        return time.strftime('%Y%m%d', time.localtime(date))
+        return time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(date))
     def __get_calendarentries(self, startdate, enddate):
         site = self.__url_build('calendarevents.json')
         fix_startdate = self.__epochtodate(startdate)
@@ -45,11 +45,55 @@ class Connect():
             return self.__get_calendarentries(startdate, enddate)
         else:
             return -1
-    def __post_calendarevent(self):
-        return -1
-    def post_clendarevent(self):
+    def __post_calendarevent(self, entry_object):
+        site = self.__url_build('calendarevents.json')
+
+        fix_startdate = self.__epochtodate(entry_object.get_start())
+        fix_enddate = self.__epochtodate(entry_object.get_end())
+        all_day = "false"
+        title = '{} - {}'.format(entry_object.get_guest(), entry_object.get_event_name())
+        service = {0:"Airbnb", 1:"VRBO"}
+        description = "Email: {}\nPhone: {}\n".format(entry_object.get_email(), entry_object.get_phone())
+        where = service[entry_object.get_service()]
+        privacy = {"type":"project", "project-id":entry_object.get_project_id()}
+        type = {"id":entry_object.get_event_id()}
+        attending_user_ids = ""
+        show_as_busy = "false"
+        notify_user_ids = ""
+        project_users_can_edit = "false"
+        reminders = []
+
+        event = {"start" : fix_startdate,
+                 "end" : fix_enddate,
+                 "all-day":all_day,
+                 "title":title,
+                 "description": description,
+                 "where":where,
+                 "privacy":privacy,
+                 "show-as-busy":show_as_busy,
+                 "type":type,
+                 "attending-user-ids":attending_user_ids,
+                 "notify-user-ids":notify_user_ids,
+                 "attendees-can-edit":project_users_can_edit,
+                 "project-users-can-edit":project_users_can_edit,
+                 "reminders":reminders}
+
+        payload = {"event":event}
+
+        r = requests.post(site, json=payload,  auth=(self.__api_key, 'pass'), headers=self.__header)
+
+        rejson = r.json()
+        try:
+            if rejson['STATUS'] == 'OK':
+                return r.json()['id']
+            else:
+                return False
+        except KeyError:
+            print(rejson)
+            return False
+    def post_calendarevent(self, entry_object):
         if self.__connection:
-            return self.__post_calendarevent()
+            return self.__post_calendarevent(entry_object)
         else:
             return -1
     def __get_projects(self):

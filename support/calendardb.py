@@ -1,4 +1,4 @@
-from support import version, icalparser
+from support import version, icalparser, teamworkapi
 
 __author__ = version.get_author()
 __version__ = version.get_version()
@@ -74,6 +74,10 @@ class entryObject():
         return self.__entry[8]
     def get_delete(self):
         return self.__entry[9]
+    def get_post_id(self):
+        return self.__entry[10]
+    def get_entry_id(self):
+        return self.__entry[11]
 
 '''
 Class: entryparentObject
@@ -176,9 +180,29 @@ class MainFile():
             return out_listing
         else:
             return -1
+    def get_entries(self):
+        out_list = list()
+        for entry in self.iter_entries():
+            out_list.append(entry)
+        return out_list
     def iter_entries_objects(self):
         for entry in self.iter_entries():
             yield entryObject(entry)
+    def get_entries_parent_objects(self):
+        out_list = list()
+        entries = self.get_entries()
+        for entry in entries:
+            entry_parent = self.get_listing(entry[0])
+            out_list.append(entryparentObject(entry, entry_parent))
+        return out_list
+    def get_pending_entries(self):
+        out_list = list()
+        entries = self.get_entries_parent_objects()
+        for entry in entries:
+            if entry.get_delete() == 1 or entry.get_posted() == 0:
+                out_list.append(entry)
+        return out_list
+
     def get_listings(self):
         out_list = list()
         for listing in self.iter_listings():
@@ -201,7 +225,7 @@ class MainFile():
             return True
         elif present == 0:
             return False
-    def append_entry(self, entry, parent_ical):
+    def append_entry(self, entry, parent_ical, id = None):
         ical_id = parent_ical.get_id()
         start_date = entry.get_start()
         leave_date = entry.get_end()
@@ -210,11 +234,31 @@ class MainFile():
         service = parent_ical.get_type()
         email = entry.get_email()
         phone = entry.get_phone()
+        if id == None:
+            entry_id = self.get_unique_random_entry()
+        else:
+            entry_id = id
         print('ICAL_ID = {} S = {} E = {}'.format(ical_id, start_date, leave_date))
-        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0))
+        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0, '', entry_id))
+    def append_entry_self(self, entry, posted, listing_id):
+        ical_id = entry.get_ical_id()
+        start_date = entry.get_start()
+        leave_date = entry.get_end()
+        amount = entry.get_amount()
+        guest = entry.get_guest()
+        service = entry.get_service()
+        email = entry.get_email()
+        phone = entry.get_phone()
+        entry_id = entry.get_entry_id()
+        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, posted, 0, listing_id, entry_id))
+
     def mark_remove(self, entry, parent_ical):
         return -1
-    def remove_entry(self, entry, parent_ical):
+    def remove_entry(self, entry):
+        params = entry.get_entry_id()
+        print(params)
+        self.__c.execute("DELETE FROM entries WHERE \"entry id\" = '{}'".format(params))
+        self.save()
         return -1
     def get_pending_teamwork_actions(self):
         pending_additions = 0
@@ -225,14 +269,34 @@ class MainFile():
             if entry.get_posted() == 0:
                 pending_additions += 1
         return pending_additions, pending_removals
+    def update_entry_id(self, entry, id):
+        params = (id, entry.get_entry_id())
+        sql = ''' UPDATE entries
+                  SET posted = 1 ,
+                      "post id" = ?
+                  WHERE "entry id" = ?'''
+        self.__c.execute(sql, params)
+        return -1
     def sync_ical(self):
         for listing in self.iter_listings():
             ical_listing = icalObject(listing, self.get_cutoff())
             ical_events = ical_listing.get_events()
             for ical_event in ical_events:
+                print(ical_event.get_guest())
                 if not self.get_entry_present(ical_event, ical_listing):
                     self.append_entry(ical_event, ical_listing)
         self.save()
+    def sync_teamwork(self, teamwork):
+        pending_entries = self.get_pending_entries()
+        for entry in pending_entries:
+            post_id = teamwork.post_calendarevent(entry)
+            print(post_id)
+            if not post_id:
+                continue
+            else:
+                self.update_entry_id(entry, post_id)
+        self.save()
+        return -1
     def get_unique_random(self):
         numgen = randgen()
         match = True
@@ -243,6 +307,20 @@ class MainFile():
             count_match = 0
             for listing in listings:
                 if id == listing[0]:
+                    count_match += 1
+            if count_match == 0:
+                match = False
+        return id
+    def get_unique_random_entry(self):
+        numgen = randgen()
+        match = True
+        entries = self.get_entries()
+        id = numgen.threegen()
+        while match:
+            id = numgen.threegen()
+            count_match = 0
+            for entry in entries:
+                if id == entry[11]:
                     count_match += 1
             if count_match == 0:
                 match = False
@@ -275,7 +353,7 @@ def createdb(file_name, company_id=131775, cutoff_date=1495584000):
     c.execute('''CREATE TABLE listings
     ('ical id' id, 'project id' id, 'ical link' text, 'event id' id, 'event name' text)''')
     c.execute('''CREATE TABLE entries
-    ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT, 'delete' BYTE)''')
+    ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT, 'delete' BYTE, 'post id' id, 'entry id' name)''')
     conn.commit()
     conn.close()
     new_file = MainFile(file_name)
@@ -285,3 +363,11 @@ def createdb(file_name, company_id=131775, cutoff_date=1495584000):
 def testdb(file_name):
     test_file = MainFile(file_name)
     return test_file.testdb()
+if __name__ == "__main__":
+    test_db = "calendar.db"
+    db = MainFile(test_db)
+    db_entry = db.get_entries_parent_objects()
+    for entry in db_entry:
+        db.update_entry_id(entry, "1101546")
+    db.save()
+    db.close()

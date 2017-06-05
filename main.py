@@ -78,6 +78,10 @@ def main():
         pending_additions, pending_removal = db.get_pending_teamwork_actions()
         if pending_additions > 0 or pending_removal > 0:
             print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
+            teamwork = teamworkapi.Connect(teamwork_api)
+            teamwork.set_company(db.get_company_id())
+            db.sync_teamwork(teamwork)
+        db.close()
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     main()
