@@ -41,6 +41,8 @@ def main():
     parser.add_argument('-s', '--setup', help='Initializes db for daemon.', action='store_true', required=False )
     parser.add_argument('-n', '--new', help='Add new .ical to sync with teamwork.', metavar='\'.ics url\'')
     parser.add_argument('-r', '--run', help='Syncs calendar from airbnb and vrbo with teamwork.', action='store_true', required=False)
+    parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
+
     args = parser.parse_args()
     if args.setup:
         db_present = calendardb.testdb(default_calendar)
@@ -81,6 +83,12 @@ def main():
             teamwork = teamworkapi.Connect(teamwork_api)
             teamwork.set_company(db.get_company_id())
             db.sync_teamwork(teamwork)
+        db.close()
+    elif args.clear:
+        db = calendardb.MainFile(default_calendar)
+        teamwork = teamworkapi.Connect(teamwork_api)
+        db.remove_all_posted(teamwork)
+        db.save()
         db.close()
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.realpath(__file__)))

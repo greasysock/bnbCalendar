@@ -78,6 +78,17 @@ class entryObject():
         return self.__entry[10]
     def get_entry_id(self):
         return self.__entry[11]
+    def set_remove_log(self, operation):
+        try:
+            self.__remove += operation
+        except AttributeError:
+            self.__remove = 0
+            self.__remove += 1
+    def get_remove_log(self):
+        try:
+            return self.__remove
+        except AttributeError:
+            return -1
 
 '''
 Class: entryparentObject
@@ -121,7 +132,6 @@ class entry_icalObject():
             return ''
     def get_amount(self):
         return 0
-
 
 class MainFile():
     def __init__(self, db_file):
@@ -200,24 +210,32 @@ class MainFile():
             entry_parent = self.get_listing(entry[0])
             out_list.append(entryparentObject(entry, entry_parent))
         return out_list
+
     def get_pending_entries(self):
+        out_list_add = list()
+        out_list_rem = list()
+        entries = self.get_entries_parent_objects()
+        for entry in entries:
+            if entry.get_delete() == 1:
+                out_list_rem.append(entry)
+            elif entry.get_posted() == 0:
+                out_list_add.append(entry)
+        return out_list_add,out_list_rem
+
+    def get_posted_entries(self):
         out_list = list()
         entries = self.get_entries_parent_objects()
         for entry in entries:
-            if entry.get_delete() == 1 or entry.get_posted() == 0:
-                out_list.append(entry)
+            if entry.get_posted() == 1:
+               out_list.append(entry)
         return out_list
 
-    def get_listings(self):
-        out_list = list()
-        for listing in self.iter_listings():
-            out_list.append(listing)
-        return out_list
     def get_ical_present(self, ical_link, idx=1):
         present = False
         for ical_check in self.iter_listings():
             if ical_check[idx] == ical_link: present = True
         return present
+
     def get_entry_present(self, entry_test, parent_ical):
         parentId = parent_ical.get_id()
         present = 0
@@ -230,6 +248,7 @@ class MainFile():
             return True
         elif present == 0:
             return False
+
     def append_entry(self, entry, parent_ical, id = None):
         ical_id = parent_ical.get_id()
         start_date = entry.get_start()
@@ -257,8 +276,14 @@ class MainFile():
         entry_id = entry.get_entry_id()
         self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, posted, 0, listing_id, entry_id))
 
-    def mark_remove(self, entry, parent_ical):
+    def set_mark_remove(self, entry, remove_step = 1):
+        params = (remove_step, entry.get_entry_id())
+        sql = ''' UPDATE entries
+                  SET "delete" = ?
+                  WHERE "entry id" = ?'''
+        self.__c.execute(sql, params)
         return -1
+
     def remove_entry(self, entry):
         params = entry.get_entry_id()
         print(params)
@@ -284,25 +309,43 @@ class MainFile():
         return -1
     def sync_ical(self):
         listings = self.get_listings()
+        entries = self.get_entries_parent_objects()
         for listing in listings:
-            print(listing)
             ical_listing = icalObject(listing, self.get_cutoff())
             ical_events = ical_listing.get_events()
             for ical_event in ical_events:
-                print(ical_event.get_guest())
+                for entry in entries:
+                    if entry.get_guest() == ical_event.get_guest() and entry.get_start() == ical_event.get_start() and entry.get_end() == ical_event.get_end() and ical_listing.get_id() == entry.get_ical_id():
+                        entry.set_remove_log(1)
                 if not self.get_entry_present(ical_event, ical_listing):
                     self.append_entry(ical_event, ical_listing)
+        for entry in entries:
+            if entry.get_remove_log() == -1:
+                print('{} NO MATCH FOUND REMOVE.'.format(entry.get_entry_id()))
+                self.set_mark_remove(entry)
         self.save()
     def sync_teamwork(self, teamwork):
-        pending_entries = self.get_pending_entries()
-        for entry in pending_entries:
+        pending_entries_add, pending_entries_remove = self.get_pending_entries()
+        for entry in pending_entries_add:
             post_id = teamwork.post_calendarevent(entry)
             print(post_id)
             if not post_id:
                 continue
             else:
                 self.update_entry_id(entry, post_id)
+        for entry in pending_entries_remove:
+            remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+            if remove_status == 1:
+                self.remove_entry(entry)
         self.save()
+        return -1
+    def remove_all_posted(self, teamwork):
+        posted_entries = self.get_posted_entries()
+        for entry in posted_entries:
+            remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+            if remove_status == 1:
+                print('removed')
+                self.remove_entry(entry)
         return -1
     def get_unique_random(self):
         numgen = randgen()
@@ -373,8 +416,3 @@ def testdb(file_name):
 if __name__ == "__main__":
     test_db = "calendar.db"
     db = MainFile(test_db)
-    db_entry = db.get_entries_parent_objects()
-    for entry in db_entry:
-        db.update_entry_id(entry, "1101546")
-    db.save()
-    db.close()

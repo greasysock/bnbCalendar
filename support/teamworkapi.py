@@ -12,6 +12,7 @@ class Connect():
         self.__api_key = api_key
         self.__default_company = None
         self.__site = site
+        self.__auth = (self.__api_key, 'pass')
         self.__header = {'user-agent':'{}/{}'.format(__title__,__version__)}
         self.__connection = self.test()
         self.__last_action = 0
@@ -19,12 +20,16 @@ class Connect():
         return '{}/{}'.format(self.__site,url)
     def test(self):
         site = self.__url_build('projects.json')
-        r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+        r = requests.get(site, headers=self.__header, auth=self.__auth)
         try:
             rjson = r.json()
         except json.decoder.JSONDecodeError:
             rjson = {'STATUS':'FAIL'}
-        working = rjson['STATUS'] == 'OK'
+        try:
+            working = rjson['STATUS'] == 'OK'
+        except KeyError:
+            print(rjson)
+            working = False
         return working
     def set_company(self, company):
         self.__default_company = company
@@ -33,6 +38,27 @@ class Connect():
         YYYY-MM-DDThhmmss --> Format
         '''
         return time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(date))
+    def __remove_calendarevent(self, event_id):
+        site = self.__url_build('calendarevents/{}.json'.format(event_id))
+        print(site)
+        r = requests.delete(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+
+        try:
+            rejson = r.json()
+            if rejson['STATUS'] == 'OK':
+                return 1
+            else:
+                return -1
+        except KeyError:
+            return -1
+        except json.decoder.JSONDecodeError:
+            print(r.status_code)
+            return -1
+    def remove_calendarevent(self, event_id):
+        if self.__connection:
+            return self.__remove_calendarevent(event_id)
+        else:
+            return -1
     def __get_calendarentries(self, startdate, enddate):
         site = self.__url_build('calendarevents.json')
         fix_startdate = self.__epochtodate(startdate)
@@ -50,7 +76,7 @@ class Connect():
 
         fix_startdate = self.__epochtodate(entry_object.get_start())
         fix_enddate = self.__epochtodate(entry_object.get_end())
-        all_day = "false"
+        all_day = "true"
         title = '{} - {}'.format(entry_object.get_guest(), entry_object.get_event_name())
         service = {0:"Airbnb", 1:"VRBO"}
         description = "Email: {}\nPhone: {}\n".format(entry_object.get_email(), entry_object.get_phone())
@@ -95,7 +121,7 @@ class Connect():
         if self.__connection:
             return self.__post_calendarevent(entry_object)
         else:
-            return -1
+            return False
     def __get_projects(self):
         site = self.__url_build('companies/{}/projects.json'.format(self.__default_company))
         r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
