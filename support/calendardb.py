@@ -165,6 +165,11 @@ class MainFile():
             return 1
         else:
             return -1
+    def get_listings(self):
+        out_list = list()
+        for listing in self.__c.execute("SELECT * FROM listings"):
+            out_list.append(listing)
+        return out_list
     def iter_listings(self):
         for listing in self.__c.execute("SELECT * FROM listings"):
             yield listing
@@ -278,7 +283,9 @@ class MainFile():
         self.__c.execute(sql, params)
         return -1
     def sync_ical(self):
-        for listing in self.iter_listings():
+        listings = self.get_listings()
+        for listing in listings:
+            print(listing)
             ical_listing = icalObject(listing, self.get_cutoff())
             ical_events = ical_listing.get_events()
             for ical_event in ical_events:
