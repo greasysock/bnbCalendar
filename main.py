@@ -13,6 +13,15 @@ except KeyError:
     print('ERROR: \'teamwork_api\' env variable is missing.')
     sys.exit(2)
 
+
+def touch(file):
+    with open(file, 'a'):
+        os.utime(file, None)
+def remove(file):
+    os.remove(file)
+def exists(file):
+    return os.path.isfile(file)
+
 def import_wizard(ical, teamwork_api):
     print('WARNING: New project feature not added.')
     print('WARNING: New event feature not added.')
@@ -54,6 +63,8 @@ def main():
             print('CalendarDB Created. Type \'{} -n url\' to add a new calendar to sync.'.format(__title__))
         sys.exit(2)
     elif args.new:
+
+        touch(lock_file)
         db_present = calendardb.testdb(default_calendar)
         calendar = calendardb.MainFile(default_calendar)
         try:
@@ -74,24 +85,28 @@ def main():
             print('ERROR: .ics provided already exists in database.')
         if not test_tw_api.test():
             print('ERROR: Invalid api key or connection error.')
+        remove(lock_file)
         sys.exit(2)
     elif args.run:
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.INFO)
         logging.info('Logging Started')
+        if not exists(lock_file):
+            db = calendardb.MainFile(default_calendar)
+            db.sync_ical()
+            pending_additions, pending_removal = db.get_pending_teamwork_actions()
+            if pending_additions > 0 or pending_removal > 0:
+                logging.info("{} pending additions to teamwork.".format(pending_additions))
+                logging.info("{} pending removals to teamwork.".format(pending_removal))
+                print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
+                teamwork = teamworkapi.Connect(teamwork_api)
+                teamwork.set_company(db.get_company_id())
+                db.sync_teamwork(teamwork)
+            else:
+                logging.info("Nothing to append to teamwork.")
+            db.close()
+        elif exists(lock_file):
+            logging.warning('Lock file \'{}\' exists. Will not sync with teamwork until removed.'.format(lock_file))
 
-        db = calendardb.MainFile(default_calendar)
-        db.sync_ical()
-        pending_additions, pending_removal = db.get_pending_teamwork_actions()
-        if pending_additions > 0 or pending_removal > 0:
-            logging.info("{} pending additions to teamwork.".format(pending_additions))
-            logging.info("{} pending removals to teamwork.".format(pending_removal))
-            print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
-            teamwork = teamworkapi.Connect(teamwork_api)
-            teamwork.set_company(db.get_company_id())
-            db.sync_teamwork(teamwork)
-        else:
-            logging.info("Nothing to append to teamwork.")
-        db.close()
     elif args.clear:
         db = calendardb.MainFile(default_calendar)
         teamwork = teamworkapi.Connect(teamwork_api)
@@ -99,6 +114,6 @@ def main():
         db.save()
         db.close()
 if __name__ == "__main__":
+    lock_file = 'lock'
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
     main()

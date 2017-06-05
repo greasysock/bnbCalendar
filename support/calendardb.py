@@ -286,8 +286,8 @@ class MainFile():
 
     def remove_entry(self, entry):
         params = entry.get_entry_id()
-        print(params)
         self.__c.execute("DELETE FROM entries WHERE \"entry id\" = '{}'".format(params))
+        logging.info("Entry '{}' removed from calendar database".format(entry.get_entry_id()))
         self.save()
         return -1
     def get_pending_teamwork_actions(self):
@@ -321,7 +321,7 @@ class MainFile():
                     self.append_entry(ical_event, ical_listing)
         for entry in entries:
             if entry.get_remove_log() == -1:
-                print('{} NO MATCH FOUND REMOVE.'.format(entry.get_entry_id()))
+                logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
                 self.set_mark_remove(entry)
         self.save()
     def sync_teamwork(self, teamwork):
@@ -346,7 +346,6 @@ class MainFile():
         for entry in posted_entries:
             remove_status = teamwork.remove_calendarevent(entry.get_post_id())
             if remove_status == 1:
-                print('removed')
                 self.remove_entry(entry)
         return -1
     def get_unique_random(self):
