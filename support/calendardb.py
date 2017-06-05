@@ -313,12 +313,13 @@ class MainFile():
         for listing in listings:
             ical_listing = icalObject(listing, self.get_cutoff())
             ical_events = ical_listing.get_events()
-            for ical_event in ical_events:
-                for entry in entries:
-                    if entry.get_guest() == ical_event.get_guest() and entry.get_start() == ical_event.get_start() and entry.get_end() == ical_event.get_end() and ical_listing.get_id() == entry.get_ical_id():
-                        entry.set_remove_log(1)
-                if not self.get_entry_present(ical_event, ical_listing):
-                    self.append_entry(ical_event, ical_listing)
+            if ical_events != list():
+                for ical_event in ical_events:
+                    for entry in entries:
+                        if entry.get_guest() == ical_event.get_guest() and entry.get_start() == ical_event.get_start() and entry.get_end() == ical_event.get_end() and ical_listing.get_id() == entry.get_ical_id():
+                            entry.set_remove_log(1)
+                    if not self.get_entry_present(ical_event, ical_listing):
+                        self.append_entry(ical_event, ical_listing)
         for entry in entries:
             if entry.get_remove_log() == -1:
                 logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
