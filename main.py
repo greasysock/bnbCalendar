@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys, argparse, os, sqlite3
+import sys, argparse, os, sqlite3, logging
 from support import calendardb, version, icalparser, teamworkapi, prompts
 
 __title__ = version.get_title()
@@ -12,6 +12,7 @@ try:
 except KeyError:
     print('ERROR: \'teamwork_api\' env variable is missing.')
     sys.exit(2)
+
 def import_wizard(ical, teamwork_api):
     print('WARNING: New project feature not added.')
     print('WARNING: New event feature not added.')
@@ -75,14 +76,21 @@ def main():
             print('ERROR: Invalid api key or connection error.')
         sys.exit(2)
     elif args.run:
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.INFO)
+        logging.info('Logging Started')
+
         db = calendardb.MainFile(default_calendar)
         db.sync_ical()
         pending_additions, pending_removal = db.get_pending_teamwork_actions()
         if pending_additions > 0 or pending_removal > 0:
+            logging.info("{} pending additions to teamwork.".format(pending_additions))
+            logging.info("{} pending removals to teamwork.".format(pending_removal))
             print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
             teamwork = teamworkapi.Connect(teamwork_api)
             teamwork.set_company(db.get_company_id())
             db.sync_teamwork(teamwork)
+        else:
+            logging.info("Nothing to append to teamwork.")
         db.close()
     elif args.clear:
         db = calendardb.MainFile(default_calendar)
@@ -92,4 +100,5 @@ def main():
         db.close()
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     main()

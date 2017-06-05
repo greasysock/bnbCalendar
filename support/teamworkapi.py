@@ -1,4 +1,4 @@
-import requests, json, time
+import requests, json, time, logging
 from support import version
 
 __author__ = version.get_author()
@@ -25,10 +25,11 @@ class Connect():
             rjson = r.json()
         except json.decoder.JSONDecodeError:
             rjson = {'STATUS':'FAIL'}
+            logging.warning("Failed to connect to teamwork servers.")
         try:
             working = rjson['STATUS'] == 'OK'
         except KeyError:
-            print(rjson)
+            logging.warning("Failed to connect to teamwork servers, authentication error.")
             working = False
         return working
     def set_company(self, company):

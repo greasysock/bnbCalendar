@@ -1,10 +1,10 @@
-from support import version, icalparser, teamworkapi
+from support import version, icalparser
 
 __author__ = version.get_author()
 __version__ = version.get_version()
 
 from random import randint
-import sqlite3
+import sqlite3, logging
 
 
 '''
@@ -330,8 +330,10 @@ class MainFile():
             post_id = teamwork.post_calendarevent(entry)
             print(post_id)
             if not post_id:
+                logging.warning("'{}' - Failed to upload to teamwork.".format(entry.get_entry_id()))
                 continue
             else:
+                logging.info("'{}' - Upload to teamwork with the posting id '{}'".format(entry.get_entry_id(), post_id))
                 self.update_entry_id(entry, post_id)
         for entry in pending_entries_remove:
             remove_status = teamwork.remove_calendarevent(entry.get_post_id())
