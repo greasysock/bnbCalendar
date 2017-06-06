@@ -93,7 +93,7 @@ def main():
         remove(lock_file)
         sys.exit(2)
     elif args.run:
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
         logging.info('Logging Started')
         if not exists(lock_file):
             db = calendardb.MainFile(default_calendar)

@@ -344,6 +344,10 @@ class MainFile():
             ical_listing = icalObject(listing, self.get_cutoff())
             ical_events = ical_listing.get_events()
             print(ical_events)
+            logging.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            logging.debug(listing[2])
+            logging.debug(ical_events)
+            logging.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
             if ical_events != list():
                 for ical_event in ical_events:
                     for entry in entries:
