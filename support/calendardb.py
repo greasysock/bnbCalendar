@@ -78,6 +78,8 @@ class entryObject():
         return self.__entry[10]
     def get_entry_id(self):
         return self.__entry[11]
+    def get_cleaning_entry(self):
+        return self.__entry[12]
     def set_remove_log(self, operation):
         try:
             self.__remove += operation
@@ -138,10 +140,13 @@ class MainFile():
         self.__db_file = db_file
         self.__conn = sqlite3.connect(db_file)
         self.__c = self.__conn.cursor()
+
     def save(self):
         self.__conn.commit()
+
     def close(self):
         self.__conn.close()
+
     def testdb(self):
         valid_db = ['config', 'listings', 'entries']
         test_db = list()
@@ -153,6 +158,7 @@ class MainFile():
             return 1
         else:
             return -1
+
     def get_from_config(self, idx):
         try:
             config = str()
@@ -164,28 +170,38 @@ class MainFile():
                 return config
         except sqlite3.OperationalError:
             return -1
+
     def get_company_id(self):
         return self.get_from_config(0)
+
     def get_cutoff(self):
         return self.get_from_config(1)
-    def set_company_id_cutoff(self, company_id, cutoff):
+
+    def get_cleaning_event(self):
+        return self.get_from_config(2)
+
+    def set_company_id_cutoff_cleaning(self, company_id, cutoff, cleaning_event):
         cur_id = self.get_company_id()
         if cur_id == -1:
-            self.__c.execute("INSERT INTO config VALUES ('{}', '{}')".format(company_id, cutoff))
+            self.__c.execute("INSERT INTO config VALUES ('{}', '{}', '{}')".format(company_id, cutoff, cleaning_event))
             return 1
         else:
             return -1
+
     def get_listings(self):
         out_list = list()
         for listing in self.__c.execute("SELECT * FROM listings"):
             out_list.append(listing)
         return out_list
+
     def iter_listings(self):
         for listing in self.__c.execute("SELECT * FROM listings"):
             yield listing
+
     def iter_entries(self):
         for entry in self.__c.execute("SELECT * FROM entries"):
             yield entry
+
     def get_listing(self, id, idx=0):
         out_listing = None
         for listing in self.iter_listings():
@@ -195,14 +211,17 @@ class MainFile():
             return out_listing
         else:
             return -1
+
     def get_entries(self):
         out_list = list()
         for entry in self.iter_entries():
             out_list.append(entry)
         return out_list
+
     def iter_entries_objects(self):
         for entry in self.iter_entries():
             yield entryObject(entry)
+
     def get_entries_parent_objects(self):
         out_list = list()
         entries = self.get_entries()
@@ -221,6 +240,17 @@ class MainFile():
             elif entry.get_posted() == 0:
                 out_list_add.append(entry)
         return out_list_add,out_list_rem
+
+    def get_pending_cleaning_entries(self):
+        out_list_add = list()
+        out_list_rem = list()
+        entries = self.get_entries_parent_objects()
+        for entry in entries:
+            if entry.get_delete() == 1 and entry.get_cleaning_entry() != '':
+                out_list_rem.append(entry)
+            elif entry.get_posted() == 1 and entry.get_cleaning_entry() == '':
+                out_list_add.append(entry)
+        return out_list_add, out_list_rem
 
     def get_posted_entries(self):
         out_list = list()
@@ -263,18 +293,7 @@ class MainFile():
         else:
             entry_id = id
         print('ICAL_ID = {} S = {} E = {}'.format(ical_id, start_date, leave_date))
-        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0, '', entry_id))
-    def append_entry_self(self, entry, posted, listing_id):
-        ical_id = entry.get_ical_id()
-        start_date = entry.get_start()
-        leave_date = entry.get_end()
-        amount = entry.get_amount()
-        guest = entry.get_guest()
-        service = entry.get_service()
-        email = entry.get_email()
-        phone = entry.get_phone()
-        entry_id = entry.get_entry_id()
-        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, posted, 0, listing_id, entry_id))
+        self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0, '', entry_id, ''))
 
     def set_mark_remove(self, entry, remove_step = 1):
         params = (remove_step, entry.get_entry_id())
@@ -290,6 +309,7 @@ class MainFile():
         logging.info("Entry '{}' removed from calendar database".format(entry.get_entry_id()))
         self.save()
         return -1
+
     def get_pending_teamwork_actions(self):
         pending_additions = 0
         pending_removals = 0
@@ -299,6 +319,7 @@ class MainFile():
             if entry.get_posted() == 0:
                 pending_additions += 1
         return pending_additions, pending_removals
+
     def update_entry_id(self, entry, id):
         params = (id, entry.get_entry_id())
         sql = ''' UPDATE entries
@@ -307,12 +328,22 @@ class MainFile():
                   WHERE "entry id" = ?'''
         self.__c.execute(sql, params)
         return -1
+
+    def update_entry_cleaning_id(self, entry, id):
+        params = (id, entry.get_entry_id())
+        sql = ''' UPDATE entries
+                          SET "cleaning id" = ?
+                          WHERE "entry id" = ?'''
+        self.__c.execute(sql, params)
+        return -1
+
     def sync_ical(self):
         listings = self.get_listings()
         entries = self.get_entries_parent_objects()
         for listing in listings:
             ical_listing = icalObject(listing, self.get_cutoff())
             ical_events = ical_listing.get_events()
+            print(ical_events)
             if ical_events != list():
                 for ical_event in ical_events:
                     for entry in entries:
@@ -325,6 +356,7 @@ class MainFile():
                 logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
                 self.set_mark_remove(entry)
         self.save()
+
     def sync_teamwork(self, teamwork):
         pending_entries_add, pending_entries_remove = self.get_pending_entries()
         for entry in pending_entries_add:
@@ -336,19 +368,53 @@ class MainFile():
             else:
                 logging.info("'{}' - Upload to teamwork with the posting id '{}'".format(entry.get_entry_id(), post_id))
                 self.update_entry_id(entry, post_id)
-        for entry in pending_entries_remove:
-            remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+        pending_entries_cleaning_add, pending_entries_cleaning_remove = self.get_pending_cleaning_entries()
+        for entry in pending_entries_cleaning_add:
+            start = entry.get_end()
+            end = entry.get_end()
+            title = '{} - Cleaning'.format(entry.get_event_name())
+            description = ''
+            where = entry.get_event_name()
+            project_id = entry.get_project_id()
+            event_id = self.get_cleaning_event()
+            post_id = teamwork.post_calendarevent_cleaning(start=start,end=end,title=title,description=description,
+                                                           where=where,project_id=project_id, event_id=event_id)
+            if not post_id:
+                logging.warning("'{}' - Cleaning event failed to upload to teamwork.".format(entry.get_entry_id()))
+            else:
+                self.update_entry_cleaning_id(entry, post_id)
+        for entry in pending_entries_cleaning_remove:
+            remove_status = teamwork.remove_calendarevent(entry.get_cleaning_entry())
             if remove_status == 1:
+                self.update_entry_cleaning_id(entry, -1)
+            elif remove_status == -1:
+                logging.warning("'{}' - Cleaning event failed to remove from teamwork".format(self.get_cleaning_event()))
+        for entry in pending_entries_remove:
+            if entry.get_post_id() != -1:
+                remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+            elif entry.get_post_id() == -1:
+                remove_status = 1
+            if remove_status == 1 and entry.get_cleaning_entry() == -1:
                 self.remove_entry(entry)
         self.save()
         return -1
+
     def remove_all_posted(self, teamwork):
         posted_entries = self.get_posted_entries()
         for entry in posted_entries:
-            remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+            if entry.get_cleaning_entry() != '' and entry.get_cleaning_entry() != -1:
+                cleaning_remove_status = teamwork.remove_calendarevent(entry.get_cleaning_entry())
+            else:
+                cleaning_remove_status = 1
+            if cleaning_remove_status == 1:
+                self.update_entry_cleaning_id(entry, -1)
+                remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+            else:
+                remove_status = -1
             if remove_status == 1:
                 self.remove_entry(entry)
         return -1
+
     def get_unique_random(self):
         numgen = randgen()
         match = True
@@ -363,6 +429,7 @@ class MainFile():
             if count_match == 0:
                 match = False
         return id
+
     def get_unique_random_entry(self):
         numgen = randgen()
         match = True
@@ -377,6 +444,7 @@ class MainFile():
             if count_match == 0:
                 match = False
         return id
+
     def append_ical(self, ical_link, project_id, event_id, event_name):
         if not self.get_ical_present(ical_link):
             unique_id = self.get_unique_random()
@@ -384,6 +452,7 @@ class MainFile():
             return 1
         else:
             return -1
+
 class randgen():
     def __init__(self):
         self.__alph = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',1,2,3,4,5,6,7,8,9]
@@ -397,24 +466,27 @@ class randgen():
         int2 = randint(0, self.__alphlen)
         int3 = randint(0, self.__alphlen)
         return '{}{}{}'.format(self.__alph[int1], self.__alph[int2], self.__alph[int3])
-def createdb(file_name, company_id=131775, cutoff_date=1495584000):
+
+def createdb(file_name, company_id=131775, cutoff_date=1495584000, cleaning_event=106880):
     conn = sqlite3.connect(file_name)
     c = conn.cursor()
     c.execute('''CREATE TABLE config
-        ('company_id' id, 'cutoff_date' date)''')
+        ('company_id' id, 'cutoff_date' date, 'cleaning event type' id )''')
     c.execute('''CREATE TABLE listings
     ('ical id' id, 'project id' id, 'ical link' text, 'event id' id, 'event name' text)''')
     c.execute('''CREATE TABLE entries
-    ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT, 'delete' BYTE, 'post id' id, 'entry id' name)''')
+    ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT, 'delete' BYTE, 'post id' id, 'entry id' id, 'cleaning id' id)''')
     conn.commit()
     conn.close()
     new_file = MainFile(file_name)
-    new_file.set_company_id_cutoff(company_id, cutoff_date)
+    new_file.set_company_id_cutoff_cleaning(company_id, cutoff_date, cleaning_event)
     new_file.save()
     return new_file
+
 def testdb(file_name):
     test_file = MainFile(file_name)
     return test_file.testdb()
+
 if __name__ == "__main__":
     test_db = "calendar.db"
     db = MainFile(test_db)

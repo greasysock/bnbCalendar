@@ -55,6 +55,8 @@ def main():
     parser.add_argument('-n', '--new', help='Add new .ical to sync with teamwork.', metavar='\'.ics url\'')
     parser.add_argument('-r', '--run', help='Syncs calendar from airbnb and vrbo with teamwork.', action='store_true', required=False)
     parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
+    parser.add_argument('-e', '--event', nargs='+', help='Add new event to teamviewer.', metavar='name color')
+
 
     args = parser.parse_args()
     if args.setup:
@@ -116,6 +118,15 @@ def main():
         db.remove_all_posted(teamwork)
         db.save()
         db.close()
+    elif args.event:
+        teamwork = teamworkapi.Connect(teamwork_api)
+        print(args.event)
+        if args.event.__len__() == 2:
+            response = teamwork.post_calendar_event_type(args.event[0],args.event[1])
+            if response:
+                print('event created')
+            else:
+                print('fail')
 if __name__ == "__main__":
     lock_file = 'lock'
     os.chdir(os.path.dirname(os.path.realpath(__file__)))

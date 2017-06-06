@@ -123,6 +123,54 @@ class Connect():
             return self.__post_calendarevent(entry_object)
         else:
             return False
+    def __post_calendarevent_cleaning(self, **kwargs):
+        site = self.__url_build('calendarevents.json')
+
+        start_fix = self.__epochtodate(kwargs['start'])
+        end_fix = self.__epochtodate(kwargs['end'])
+
+        all_day = "true"
+        privacy = {"type":"project", "project-id":kwargs['project_id']}
+        type = {"id":kwargs['event_id']}
+        attending_user_ids = ""
+        show_as_busy = "false"
+        notify_user_ids = ""
+        project_users_can_edit = "false"
+        reminders = []
+
+        event = {"start" : start_fix,
+                 "end" : end_fix,
+                 "all-day":all_day,
+                 "title": kwargs['title'],
+                 "description": kwargs['description'],
+                 "where": kwargs['where'],
+                 "privacy": privacy,
+                 "show-as-busy": show_as_busy,
+                 "type": type,
+                 "attending-user-ids": attending_user_ids,
+                 "notify-user-ids": notify_user_ids,
+                 "attendees-can-edit": project_users_can_edit,
+                 "project-users-can-edit": project_users_can_edit,
+                 "reminders":reminders}
+
+        payload = {"event":event}
+
+        r = requests.post(site, json=payload,  auth=(self.__api_key, 'pass'), headers=self.__header)
+
+        rejson = r.json()
+        try:
+            if rejson['STATUS'] == 'OK':
+                return r.json()['id']
+            else:
+                return False
+        except KeyError:
+            print(rejson)
+            return False
+    def post_calendarevent_cleaning(self, **kwargs):
+        if self.__connection:
+            return self.__post_calendarevent_cleaning(**kwargs)
+        else:
+            return False
     def __get_projects(self):
         site = self.__url_build('companies/{}/projects.json'.format(self.__default_company))
         r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
@@ -164,6 +212,25 @@ class Connect():
             return self.__get_calendar_events()
         else:
             return -1
+    def __post_calendar_event_type(self, title, hexcolor):
+        eventtype = {'name':title,'color':hexcolor}
+        payload = {'eventtype':eventtype}
+        site = self.__url_build('eventtypes.json')
+        r = requests.post(site, json=payload, auth=self.__auth, headers=self.__header)
+        try:
+            response = r.json()
+        except json.decoder.JSONDecodeError:
+            response = False
+        try:
+            reponse = response['STATUS'] == 'OK'
+        except KeyError:
+            response = False
+        return response
+    def post_calendar_event_type(self, title, hexcolor):
+        if self.__connection:
+            return self.__post_calendar_event_type(title, hexcolor)
+        else:
+            return False
 
 if __name__ == '__main__':
     import os

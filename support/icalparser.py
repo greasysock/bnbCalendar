@@ -131,7 +131,10 @@ class Connect():
         else:
             return name
     def __abb_name_clean(self, name):
-        return name
+        if name != 'Not available':
+            return name[:-13]
+        elif name == 'Not available':
+            return name
     def get_events_vrbo(self):
         out_list = list()
         recover = ('DTSTART', 'DTEND', 'SUMMARY')
