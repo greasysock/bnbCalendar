@@ -86,7 +86,7 @@ class Connect():
         type = {"id":entry_object.get_event_id()}
         attending_user_ids = ""
         show_as_busy = "false"
-        notify_user_ids = ""
+        notify_user_ids = "199418, 274641"
         project_users_can_edit = "false"
         reminders = []
 
@@ -100,6 +100,7 @@ class Connect():
                  "show-as-busy":show_as_busy,
                  "type":type,
                  "attending-user-ids":attending_user_ids,
+                 "notify":'true',
                  "notify-user-ids":notify_user_ids,
                  "attendees-can-edit":project_users_can_edit,
                  "project-users-can-edit":project_users_can_edit,
@@ -134,7 +135,7 @@ class Connect():
         type = {"id":kwargs['event_id']}
         attending_user_ids = ""
         show_as_busy = "false"
-        notify_user_ids = ""
+        notify_user_ids = "201024"
         project_users_can_edit = "false"
         reminders = []
 
@@ -149,6 +150,7 @@ class Connect():
                  "type": type,
                  "attending-user-ids": attending_user_ids,
                  "notify-user-ids": notify_user_ids,
+                 "notify": 'true',
                  "attendees-can-edit": project_users_can_edit,
                  "project-users-can-edit": project_users_can_edit,
                  "reminders":reminders}
