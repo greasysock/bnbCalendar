@@ -4,7 +4,7 @@ __author__ = version.get_author()
 __version__ = version.get_version()
 
 from random import randint
-import sqlite3, logging
+import sqlite3, logging, time
 
 
 '''
@@ -12,23 +12,31 @@ Class: icalObject
 Description: wraps parsed ical data for easier implementation
 '''
 
-class icalObject():
+
+class parentObject():
+    def __init__(self, parent):
+        self.__parent = parent
+    def get_id(self):
+        return self.__parent[0]
+    def get_project_id(self):
+        return self.__parent[1]
+    def get_ical_link(self):
+        return self.__parent[2]
+    def get_event_id(self):
+        return self.__parent[3]
+    def get_event_name(self):
+        return self.__parent[4]
+    def get_last_sync(self):
+        return self.__parent[5]
+
+class icalObject(parentObject):
     def __init__(self, listing, cutoff):
+        parentObject.__init__(self,listing)
         self.__listing = listing
         self.__cutoff = cutoff
     def generate(self):
-        self.__parser = icalparser.Connect(self.get_link())
+        self.__parser = icalparser.Connect(self.get_ical_link())
         return -1
-    def get_link(self):
-        return self.__listing[2]
-    def get_id(self):
-        return self.__listing[0]
-    def get_projectid(self):
-        return self.__listing[1]
-    def get_eventid(self):
-        return self.__listing[3]
-    def get_name(self):
-        return self.__listing[4]
     def get_type(self):
         return self.__parser.get_type()
     def get_events(self):
@@ -107,6 +115,10 @@ class entryparentObject(entryObject):
         return self.__parent[3]
     def get_event_name(self):
         return self.__parent[4]
+    def get_last_sync(self):
+        return self.__parent[5]
+
+
 
 '''
 Class: entry_icalObject
@@ -194,6 +206,13 @@ class MainFile():
             out_list.append(listing)
         return out_list
 
+    def get_listings_objects(self):
+        listings = self.get_listings()
+        out_list = list()
+        for listing in listings:
+            out_list.append(parentObject(listing))
+        return out_list
+
     def iter_listings(self):
         for listing in self.__c.execute("SELECT * FROM listings"):
             yield listing
@@ -217,7 +236,14 @@ class MainFile():
         for entry in self.iter_entries():
             out_list.append(entry)
         return out_list
-
+    def get_entries_listing(self, id):
+        entries = self.get_entries()
+        out_list = list()
+        for entry in entries:
+            if id == entry[0]:
+                entry_parent = self.get_listing(entry[0])
+                out_list.append(entryparentObject(entry, entry_parent))
+        return out_list
     def iter_entries_objects(self):
         for entry in self.iter_entries():
             yield entryObject(entry)
@@ -337,7 +363,16 @@ class MainFile():
         self.__c.execute(sql, params)
         return -1
 
-    def sync_ical(self):
+    def set_listing_last_sync(self, listingobj):
+        params = (time.time(), listingobj.get_id())
+        sql = ''' UPDATE listings
+                                  SET "last sync" = ?
+                                  WHERE "ical id" = ?'''
+        self.__c.execute(sql, params)
+        self.save()
+        return -1
+
+    def sync_icals(self):
         listings = self.get_listings()
         entries = self.get_entries_parent_objects()
         for listing in listings:
@@ -360,7 +395,35 @@ class MainFile():
                 logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
                 self.set_mark_remove(entry)
         self.save()
+    def sync_listing_ical(self, listingobj):
+        listing = self.get_listing(listingobj.get_id())
+        ical_object = icalObject(listing, self.get_cutoff())
+        ical_events = ical_object.get_events()
+        entries = self.get_entries_listing(listingobj.get_id())
+        logging.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        logging.debug(listing[2])
+        logging.debug(ical_events)
+        logging.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
 
+        out_value = 0
+        if ical_events != list():
+            for ical_event in ical_events:
+                for entry in entries:
+                    if entry.get_guest() == ical_event.get_guest()\
+                            and entry.get_start() == ical_event.get_start() \
+                            and entry.get_end() == ical_event.get_end() \
+                            and ical_object.get_id() == entry.get_ical_id():
+                        entry.set_remove_log(1)
+                if not self.get_entry_present(ical_event, ical_object):
+                    self.append_entry(ical_event, ical_object)
+                    self.save()
+            self.set_listing_last_sync(listingobj)
+            out_value = 1
+        for entry in entries:
+            if entry.get_remove_log() == -1:
+                logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
+                self.set_mark_remove(entry)
+        return out_value == 1
     def sync_teamwork(self, teamwork):
         pending_entries_add, pending_entries_remove = self.get_pending_entries()
         for entry in pending_entries_add:
@@ -387,15 +450,19 @@ class MainFile():
                 logging.warning("'{}' - Cleaning event failed to upload to teamwork.".format(entry.get_entry_id()))
             else:
                 self.update_entry_cleaning_id(entry, post_id)
+                self.save()
         for entry in pending_entries_cleaning_remove:
-            remove_status = teamwork.remove_calendarevent(entry.get_cleaning_entry())
-            if remove_status == 1:
-                self.update_entry_cleaning_id(entry, -1)
-            elif remove_status == -1:
-                logging.warning("'{}' - Cleaning event failed to remove from teamwork".format(self.get_cleaning_event()))
+            if entry.get_cleaning_entry() != -1:
+                remove_status = teamwork.remove_calendarevent(entry.get_cleaning_entry())
+                if remove_status == 1:
+                    self.update_entry_cleaning_id(entry, -1)
+                elif remove_status == -1:
+                    logging.warning("'{}' - Cleaning event failed to remove from teamwork".format(self.get_cleaning_event()))
         for entry in pending_entries_remove:
             if entry.get_post_id() != -1:
                 remove_status = teamwork.remove_calendarevent(entry.get_post_id())
+                if remove_status == 1:
+                    self.update_entry_id(entry,-1)
             elif entry.get_post_id() == -1:
                 remove_status = 1
             if remove_status == 1 and entry.get_cleaning_entry() == -1:
@@ -452,7 +519,7 @@ class MainFile():
     def append_ical(self, ical_link, project_id, event_id, event_name):
         if not self.get_ical_present(ical_link):
             unique_id = self.get_unique_random()
-            self.__c.execute("INSERT INTO listings VALUES ('{}','{}','{}','{}','{}')".format(unique_id,project_id,ical_link,event_id,event_name))
+            self.__c.execute("INSERT INTO listings VALUES ('{}','{}','{}','{}','{}', '{}')".format(unique_id,project_id,ical_link,event_id,event_name,0))
             return 1
         else:
             return -1
@@ -477,7 +544,7 @@ def createdb(file_name, company_id=131775, cutoff_date=1495584000, cleaning_even
     c.execute('''CREATE TABLE config
         ('company_id' id, 'cutoff_date' date, 'cleaning event type' id )''')
     c.execute('''CREATE TABLE listings
-    ('ical id' id, 'project id' id, 'ical link' text, 'event id' id, 'event name' text)''')
+    ('ical id' id, 'project id' id, 'ical link' text, 'event id' id, 'event name' text, 'last sync' date)''')
     c.execute('''CREATE TABLE entries
     ('ical id' id, 'arrival date' date, 'leave date' date, 'amount' money, 'guest' name, 'service' int, 'email' name, 'phone' text, 'posted' BIT, 'delete' BYTE, 'post id' id, 'entry id' id, 'cleaning id' id)''')
     conn.commit()

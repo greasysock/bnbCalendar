@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys, argparse, os, sqlite3, logging
+import sys, argparse, os, sqlite3, logging, csv, time
 from support import calendardb, version, icalparser, teamworkapi, prompts
 
 __title__ = version.get_title()
@@ -48,6 +48,25 @@ def import_wizard(ical, teamwork_api):
         print('Import Failure!')
     remove(lock_file)
     sys.exit(2)
+
+def get_sync_key(listing):
+    return listing.get_last_sync()
+
+def sync_ical(db, maxjob=3, wait_time=300):
+    listings = db.get_listings_objects()
+
+    sorted_listings = sorted(listings,key=get_sync_key)
+    synced_items = 0
+    for idx, listing in enumerate(sorted_listings):
+        last_sync = time.time() - listing.get_last_sync()
+
+        if last_sync >= wait_time and synced_items < maxjob:
+            result = db.sync_listing_ical(listing)
+            if result:
+                synced_items += 1
+                print(listing.get_event_name())
+    return db
+
 def main():
     parser = argparse.ArgumentParser(prog=__title__)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s {}'.format(__version__))
@@ -55,7 +74,9 @@ def main():
     parser.add_argument('-n', '--new', help='Add new .ical to sync with teamwork.', metavar='\'.ics url\'')
     parser.add_argument('-r', '--run', help='Syncs calendar from airbnb and vrbo with teamwork.', action='store_true', required=False)
     parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
+    parser.add_argument('-b', '--backup', help='Backup listings to .csv file.', action='store_true', required=False)
     parser.add_argument('-e', '--event', nargs='+', help='Add new event to teamviewer.', metavar='name color')
+
 
 
     args = parser.parse_args()
@@ -68,36 +89,47 @@ def main():
             print('CalendarDB Created. Type \'{} -n url\' to add a new calendar to sync.'.format(__title__))
         sys.exit(2)
     elif args.new:
+        if args.new != backup_file:
+            touch(lock_file)
+            db_present = calendardb.testdb(default_calendar)
+            calendar = calendardb.MainFile(default_calendar)
+            try:
+                if not calendar.get_ical_present(args.new):
+                    ics_test = icalparser.test_ical(args.new)
+                elif calendar.get_ical_present(args.new):
+                    ics_test = -2
+            except sqlite3.OperationalError:
+                ics_test = -1
+            test_tw_api = teamworkapi.Connect(teamwork_api)
+            if db_present == 1 and ics_test == 1 and test_tw_api.test():
+                import_wizard(args.new, test_tw_api)
+            if db_present == -1:
+                print('ERROR: Database not present or invalid.')
+            if ics_test == -1:
+                print('ERROR: Invalid .ics link provided.')
+            elif ics_test == -2:
+                print('ERROR: .ics provided already exists in database.')
+            if not test_tw_api.test():
+                print('ERROR: Invalid api key or connection error.')
+            remove(lock_file)
+            sys.exit(2)
+        elif args.new == backup_file:
+            print('Installing backup files')
+            db = calendardb.MainFile(default_calendar)
+            with open(backup_file, 'r') as csvfile:
+                backupreader = csv.reader(csvfile, delimiter = ' ',
+                                          quotechar='|')
+                for listing in backupreader:
+                    db.append_ical(listing[1],listing[0],listing[2],listing[3])
+            db.save()
 
-        touch(lock_file)
-        db_present = calendardb.testdb(default_calendar)
-        calendar = calendardb.MainFile(default_calendar)
-        try:
-            if not calendar.get_ical_present(args.new):
-                ics_test = icalparser.test_ical(args.new)
-            elif calendar.get_ical_present(args.new):
-                ics_test = -2
-        except sqlite3.OperationalError:
-            ics_test = -1
-        test_tw_api = teamworkapi.Connect(teamwork_api)
-        if db_present == 1 and ics_test == 1 and test_tw_api.test():
-            import_wizard(args.new, test_tw_api)
-        if db_present == -1:
-            print('ERROR: Database not present or invalid.')
-        if ics_test == -1:
-            print('ERROR: Invalid .ics link provided.')
-        elif ics_test == -2:
-            print('ERROR: .ics provided already exists in database.')
-        if not test_tw_api.test():
-            print('ERROR: Invalid api key or connection error.')
-        remove(lock_file)
-        sys.exit(2)
+            sys.exit(2)
     elif args.run:
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
         logging.info('Logging Started')
         if not exists(lock_file):
             db = calendardb.MainFile(default_calendar)
-            db.sync_ical()
+            db = sync_ical(db)
             pending_additions, pending_removal = db.get_pending_teamwork_actions()
             if pending_additions > 0 or pending_removal > 0:
                 logging.info("{} pending additions to teamwork.".format(pending_additions))
@@ -127,7 +159,16 @@ def main():
                 print('event created')
             else:
                 print('fail')
+    elif args.backup:
+        db = calendardb.MainFile(default_calendar)
+        listings = db.get_listings()
+        with open(backup_file, 'w') as csvfile:
+            backupwriter = csv.writer(csvfile, delimiter = ' ',
+                                      quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            for listing in listings:
+                backupwriter.writerow([listing[1],listing[2],listing[3],listing[4]])
 if __name__ == "__main__":
     lock_file = 'lock'
+    backup_file = 'backup.csv'
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     main()

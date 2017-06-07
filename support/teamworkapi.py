@@ -226,12 +226,86 @@ class Connect():
         except KeyError:
             response = False
         return response
+    def __get_project_calendar_events(self, project, **kwargs):
+        site = self.__url_build('calendarevents.json')
+        payload = {'startdate':kwargs['startdate'], 'endDate':kwargs['enddate'], 'updatedAfterDate':kwargs['updatedafter']}
+        r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
+        rjson = r.json()
+        out_list = list()
+        for event in rjson['events']:
+            if event['privacy']['project-id'] == project:
+                out_list.append(event)
+        return out_list
+    def get_project_calendar_events(self, project, **kwargs):
+        if self.__connection:
+            return self.__get_project_calendar_events(project, **kwargs)
+        else:
+            return -1
     def post_calendar_event_type(self, title, hexcolor):
         if self.__connection:
             return self.__post_calendar_event_type(title, hexcolor)
         else:
             return False
-
+    def __update_calendar_event_type(self, **kwargs):
+        site = self.__url_build('eventtypes/{}.json'.format(kwargs['event_id']))
+        payload = {
+            "eventtype":{
+                "name" : kwargs['name'],
+                "color": kwargs['color']
+        }
+        }
+        r = requests.put(site, auth=self.__auth, json=payload)
+        print(r.json())
+        return -1
+    def update_calendar_event_type(self, **kwargs):
+        if self.__connection:
+            return self.__update_calendar_event_type(**kwargs)
+        else:
+            return -1
+    def __add_user(self, **kwargs):
+        site = self.__url_build('people.json')
+        payload = {
+            "person": {
+                "first-name": kwargs['first_name'],
+                "last-name": kwargs['last_name'],
+                "email-address": kwargs['email'],
+                "user-type": "account",
+                "user-name": kwargs['username'],
+                "password": kwargs['password'],
+                "company-id": kwargs['company_id'],
+                "title": kwargs['title'],
+                "phone-number-mobile": "",
+                "phone-number-office": "",
+                "phone-number-office-ext": "",
+                "phone-number-fax": "",
+                "phone-number-home": "",
+                "im-handle": "",
+                "im-service": "",
+                "dateFormat": "dd/mm/yyyy",
+                "sendWelcomeEmail": "no",
+                "welcomeEmailMessage": "",
+                "receiveDailyReports": "no",
+                "autoGiveProjectAccess": "yes",
+                "openID": "",
+                "privateNotes": "",
+                "userLanguage": "EN",
+                "administrator": "yes",
+                "canAddProjects": "yes",
+                "timezoneId": "15",
+                "notifyOnTaskComplete": "no",
+                "userReceiveNotifyWarnings": "no",
+                "notify-on-added-as-follower": "yes",
+                "notify-on-status-update": "yes"
+            }
+        }
+        r = requests.post(site, json=payload, auth=self.__auth)
+        print(r.json())
+        return -1
+    def add_user(self, **kwargs):
+        if self.__connection:
+            return self.__add_user(**kwargs)
+        else:
+            return -1
 if __name__ == '__main__':
     import os
     api_key = os.environ['teamwork_api']
