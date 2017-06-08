@@ -413,12 +413,12 @@ class MainFile():
                 if not self.get_entry_present(ical_event, ical_object):
                     self.append_entry(ical_event, ical_object)
                     self.save()
-            self.set_listing_last_sync(listingobj)
             out_value = 1
             for entry in entries:
                 if entry.get_remove_log() == -1:
                     logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
                     self.set_mark_remove(entry)
+        self.set_listing_last_sync(listingobj)
         return out_value == 1
     def sync_teamwork(self, teamwork):
         pending_entries_add, pending_entries_remove = self.get_pending_entries()
