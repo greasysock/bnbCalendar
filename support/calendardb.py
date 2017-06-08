@@ -400,13 +400,9 @@ class MainFile():
         ical_object = icalObject(listing, self.get_cutoff())
         ical_events = ical_object.get_events()
         entries = self.get_entries_listing(listingobj.get_id())
-        logging.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        logging.debug(listing[2])
-        logging.debug(ical_events)
-        logging.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
 
         out_value = 0
-        if ical_events != list():
+        if ical_events != []:
             for ical_event in ical_events:
                 for entry in entries:
                     if entry.get_guest() == ical_event.get_guest()\
@@ -419,10 +415,10 @@ class MainFile():
                     self.save()
             self.set_listing_last_sync(listingobj)
             out_value = 1
-        for entry in entries:
-            if entry.get_remove_log() == -1:
-                logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
-                self.set_mark_remove(entry)
+            for entry in entries:
+                if entry.get_remove_log() == -1:
+                    logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
+                    self.set_mark_remove(entry)
         return out_value == 1
     def sync_teamwork(self, teamwork):
         pending_entries_add, pending_entries_remove = self.get_pending_entries()

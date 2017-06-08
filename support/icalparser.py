@@ -5,6 +5,8 @@ __author__ = version.get_author()
 __version__ = version.get_version()
 __title__ = version.get_title()
 
+ignore_guests = ['Not available', 'Blocked']
+
 def get_ical(link):
     head = {'user-agent' : '{}/{}'.format(__title__, __version__)}
     r = requests.get(link, headers=head, timeout=10)
@@ -97,7 +99,8 @@ class Connect():
             if raw_values.__len__() == recover.__len__():
                 event_dict['phone'] = raw_values[3]
                 event_dict['email'] = raw_values[4]
-            out_list.append(event_dict)
+            if event_dict['guest'] not in ignore_guests:
+                out_list.append(event_dict)
         return out_list
     def __recover_value(self, extract_line ,recover_tup, seperator=':', back_seperator=';'):
         out_dict = dict()
@@ -144,7 +147,8 @@ class Connect():
             event_dict['start'] = self.__date_clean(raw_values[0])
             event_dict['end'] = self.__date_clean(raw_values[1])
             event_dict['guest'] = self.__vrbo_name_clean(raw_values[2])
-            out_list.append(event_dict)
+            if event_dict['guest'] not in ignore_guests:
+                out_list.append(event_dict)
         return out_list
     def __iter_events_raw(self):
         raw_list = self.get_raw_events_list()
