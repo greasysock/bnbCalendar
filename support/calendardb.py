@@ -400,7 +400,7 @@ class MainFile():
         ical_object = icalObject(listing, self.get_cutoff())
         ical_events = ical_object.get_events()
         entries = self.get_entries_listing(listingobj.get_id())
-
+        logging.info("Listing '{}' Listing ID '{}'".format(ical_object.get_event_name(), ical_object.get_id()))
         out_value = 0
         if ical_events != []:
             for ical_event in ical_events:
