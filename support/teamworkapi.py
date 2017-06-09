@@ -86,8 +86,8 @@ class Connect():
         type = {"id":entry_object.get_event_id()}
         attending_user_ids = ""
         show_as_busy = "false"
-#        notify_user_ids = "199418, 274641"
-        notify_user_ids = "274641"
+        notify_user_ids = "199418, 274641"
+#        notify_user_ids = "274641"
 
         project_users_can_edit = "false"
         reminders = []
@@ -137,8 +137,8 @@ class Connect():
         type = {"id":kwargs['event_id']}
         attending_user_ids = ""
         show_as_busy = "false"
-#        notify_user_ids = "201024"
-        notify_user_ids = ""
+        notify_user_ids = "201024"
+#        notify_user_ids = ""
 
         project_users_can_edit = "false"
         reminders = []
