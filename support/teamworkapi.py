@@ -274,7 +274,8 @@ class Connect():
         rjson = r.json()
         out_company = ''
         for project in rjson['projects']:
-            print(project)
+            if project['id'] == str(project):
+                print(project)
         return -1
     def get_company_id(self, project):
         if self.__connection:
