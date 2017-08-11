@@ -73,6 +73,7 @@ def main():
     parser.add_argument('-s', '--setup', help='Initializes db for daemon.', action='store_true', required=False )
     parser.add_argument('-n', '--new', help='Add new .ical to sync with teamwork.', metavar='\'.ics url\'')
     parser.add_argument('-r', '--run', help='Syncs calendar from airbnb and vrbo with teamwork.', action='store_true', required=False)
+    parser.add_argument('-R', '--remove', help='Remove company calendar from teamwork', metavar='\'Company ID\'')
     parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
     parser.add_argument('-b', '--backup', help='Backup listings to .csv file.', action='store_true', required=False)
     parser.add_argument('-e', '--event', nargs='+', help='Add new event to teamviewer.', metavar='name color')
@@ -124,6 +125,10 @@ def main():
             db.save()
 
             sys.exit(2)
+    elif args.remove:
+        connection = teamworkapi.Connect(teamwork_api)
+        connection.get_company_calendar(args.remove, startdate=1495584000, enddate=int(time.time()))
+        return -1
     elif args.run:
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
         urllib3_logger = logging.getLogger('urllib3')

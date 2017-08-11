@@ -247,6 +247,22 @@ class Connect():
             return self.__get_project_calendar_events(project, **kwargs)
         else:
             return -1
+    def __get_company_clanedar(self, company, **kwargs):
+        site = self.__url_build('calendarevents.json')
+        payload = {'startdate':kwargs['startdate'], 'endDate':kwargs['enddate']}
+        r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
+        out_list = list()
+        rjson = r.json()
+        for event in rjson['events']:
+            print(event['privacy'])
+            if event['privacy']['project-id'] == company:
+                out_list.append(event)
+        return out_list
+    def get_company_calendar(self, company, **kwargs):
+        if self.__connection:
+            return self.__get_company_clanedar(company, **kwargs)
+        else:
+            return -1
     def post_calendar_event_type(self, title, hexcolor):
         if self.__connection:
             return self.__post_calendar_event_type(title, hexcolor)

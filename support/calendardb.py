@@ -536,7 +536,9 @@ class randgen():
         int3 = randint(0, self.__alphlen)
         return '{}{}{}'.format(self.__alph[int1], self.__alph[int2], self.__alph[int3])
 
-def createdb(file_name, company_id=131775, cutoff_date=1495584000, cleaning_event=106880):
+def createdb(file_name, company_id=98287, start_week=2, cleaning_event=106880):
+    time_offset = start_week * 24 * 60 * 60
+    cutoff_date = int(time.time()) - time_offset
     conn = sqlite3.connect(file_name)
     c = conn.cursor()
     c.execute('''CREATE TABLE config
