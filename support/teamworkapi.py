@@ -34,11 +34,14 @@ class Connect():
         return working
     def set_company(self, company):
         self.__default_company = company
-    def __epochtodate(self, date):
+    def __epochtodate(self, date, type=0):
         '''
         YYYY-MM-DDThhmmss --> Format
         '''
-        return time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(date))
+        if type == 0:
+            return time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(date))
+        elif type == 1:
+            return time.strftime('%Y%m%d', time.localtime(date))
     def __remove_calendarevent(self, event_id):
         site = self.__url_build('calendarevents/{}.json'.format(event_id))
         print(site)
@@ -249,7 +252,7 @@ class Connect():
             return -1
     def __get_company_clanedar(self, company, **kwargs):
         site = self.__url_build('calendarevents.json')
-        payload = {'startdate':self.__epochtodate(kwargs['startdate']), 'endDate':self.__epochtodate(kwargs['enddate'])}
+        payload = {'startdate':self.__epochtodate(kwargs['startdate'], type=1), 'endDate':self.__epochtodate(kwargs['enddate'], type=1)}
         r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
         out_list = list()
         rjson = r.json()
