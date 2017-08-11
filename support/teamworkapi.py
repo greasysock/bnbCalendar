@@ -253,6 +253,7 @@ class Connect():
         r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
         out_list = list()
         rjson = r.json()
+        print(rjson)
         for event in rjson['events']:
             print(event['privacy'])
             if event['privacy']['project-id'] == company:
