@@ -249,7 +249,7 @@ class Connect():
             return -1
     def __get_company_clanedar(self, company, **kwargs):
         site = self.__url_build('calendarevents.json')
-        payload = {'startdate':kwargs['startdate'], 'endDate':kwargs['enddate']}
+        payload = {'startdate':self.__epochtodate(kwargs['startdate']), 'endDate':self.__epochtodate(kwargs['enddate'])}
         r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
         out_list = list()
         rjson = r.json()
