@@ -256,6 +256,7 @@ class Connect():
         r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
         out_list = list()
         rjson = r.json()
+        company_dict = dict()
         print(rjson)
         for event in rjson['events']:
             print(event['privacy'])
@@ -265,6 +266,19 @@ class Connect():
     def get_company_calendar(self, company, **kwargs):
         if self.__connection:
             return self.__get_company_clanedar(company, **kwargs)
+        else:
+            return -1
+    def __get_company_id(self, project):
+        site = self.__url_build('projects.json')
+        r = requests.get(site, auth=self.__auth, headers=self.__header)
+        rjson = r.json()
+        out_company = ''
+        for project in rjson['projects']:
+            print(project)
+        return -1
+    def get_company_id(self, project):
+        if self.__connection:
+            return self.__get_company_id(project)
         else:
             return -1
     def post_calendar_event_type(self, title, hexcolor):

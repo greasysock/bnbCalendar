@@ -127,7 +127,8 @@ def main():
             sys.exit(2)
     elif args.remove:
         connection = teamworkapi.Connect(teamwork_api)
-        connection.get_company_calendar(args.remove, startdate=1495584000, enddate=int(time.time()))
+#        connection.get_company_calendar(args.remove, startdate=1495584000, enddate=int(time.time()))
+        connection.get_company_id(376160)
         return -1
     elif args.run:
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
