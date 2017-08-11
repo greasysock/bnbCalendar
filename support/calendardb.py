@@ -537,7 +537,7 @@ class randgen():
         return '{}{}{}'.format(self.__alph[int1], self.__alph[int2], self.__alph[int3])
 
 def createdb(file_name, company_id=98287, start_week=2, cleaning_event=106880):
-    time_offset = start_week * 24 * 60 * 60
+    time_offset = start_week * 24 * 60 * 60 * 7
     cutoff_date = int(time.time()) - time_offset
     conn = sqlite3.connect(file_name)
     c = conn.cursor()
