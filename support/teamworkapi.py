@@ -181,7 +181,7 @@ class Connect():
         else:
             return False
     def __get_projects(self):
-        site = self.__url_build('companies/{}/projects.json'.format(self.__default_company))
+        site = self.__url_build('projects.json')
         r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
         projects_pack = r.json()
         out_list = list()
@@ -255,13 +255,33 @@ class Connect():
         payload = {'startdate':self.__epochtodate(kwargs['startdate'], type=1), 'endDate':self.__epochtodate(kwargs['enddate'], type=1)}
         r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
         out_list = list()
+        print(r.headers)
+        pages_count = int(r.headers['X-Pages'])
+        current_page = int(r.headers['X-Page'])
+
         rjson = r.json()
+        event_pages = list()
+        event_pages.append(rjson)
+        if pages_count > 1:
+            for page in range(pages_count):
+                if page+1 > current_page:
+                    target_page = page+1
+                    payload['page'] = target_page
+                    r = requests.get(site, params=payload, auth=self.__auth, headers=self.__header)
+                    rjson = r.json()
+                    event_pages.append(rjson)
+
         company_dict = dict()
-        print(rjson)
-        for event in rjson['events']:
-            print(event['privacy'])
-            if event['privacy']['project-id'] == company:
-                out_list.append(event)
+        for event_page in event_pages:
+            for event in event_page['events']:
+                try:
+                    if company_dict[event['privacy']['project-id']] == int(company):
+                        out_list.append(event)
+                except KeyError:
+                    company_dict[event['privacy']['project-id']] = self.get_company_id(event['privacy']['project-id'])
+                    if company_dict[event['privacy']['project-id']] == int(company):
+                        out_list.append(event)
+        print(company_dict)
         return out_list
     def get_company_calendar(self, company, **kwargs):
         if self.__connection:
@@ -269,14 +289,22 @@ class Connect():
         else:
             return -1
     def __get_company_id(self, project):
-        site = self.__url_build('projects.json')
-        r = requests.get(site, auth=self.__auth, headers=self.__header)
-        rjson = r.json()
-        out_company = ''
-        for project in rjson['projects']:
-            if project['id'] == str(project):
-                print(project)
-        return -1
+        out_company = None
+        try:
+            for project_candidate in self.__last_company_check['projects']:
+                p_id = project_candidate['id']
+                if p_id == str(project):
+                    out_company = int(project_candidate['company']['id'])
+        except AttributeError:
+            site = self.__url_build('projects.json')
+            r = requests.get(site, auth=self.__auth, headers=self.__header)
+            rjson = r.json()
+            self.__last_company_check = rjson
+            for project_candidate in self.__last_company_check['projects']:
+                p_id = project_candidate['id']
+                if p_id == str(project):
+                    out_company = int(project_candidate['company']['id'])
+        return out_company
     def get_company_id(self, project):
         if self.__connection:
             return self.__get_company_id(project)
