@@ -247,7 +247,8 @@ class MainFile():
     def iter_entries_objects(self):
         for entry in self.iter_entries():
             yield entryObject(entry)
-
+    def stay_duration_calc(self, start, end):
+        return -1
     def get_entries_parent_objects(self):
         out_list = list()
         entries = self.get_entries()

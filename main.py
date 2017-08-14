@@ -129,7 +129,7 @@ def main():
         connection = teamworkapi.Connect(teamwork_api)
         entries = connection.get_company_calendar(args.remove, startdate=1495584000, enddate=1565542577)
         for entry in entries:
-            print(entry)
+            print('delete')
             connection.remove_calendarevent(entry['id'])
         return -1
     elif args.run:
