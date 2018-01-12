@@ -92,6 +92,7 @@ class Connect():
         recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY', 'PHONE', 'EMAIL')
         for raw_event in self.__iter_events_raw():
             raw_values = self.__recover_value(raw_event, recover)
+            print(raw_values)
             event_dict = dict()
             event_dict['start'] = self.__abb_date_clean(raw_values[0])
             event_dict['end'] = self.__abb_date_clean(raw_values[1])
@@ -101,7 +102,6 @@ class Connect():
                 event_dict['email'] = raw_values[4]
             if event_dict['guest'] not in ignore_guests:
                 out_list.append(event_dict)
-        print(out_list)
         return out_list
     def __recover_value(self, extract_line ,recover_tup, seperator=':', back_seperator=';'):
         out_dict = dict()
