@@ -323,6 +323,7 @@ class MainFile():
         try:
             self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0, '', entry_id, ''))
         except sqlite3.OperationalError:
+            self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, "Jackie Chan-{}".format(parent_ical.get_id()), service, email, phone, 0, 0, '', entry_id, ''))
             print('skipping')
     def set_mark_remove(self, entry, remove_step = 1):
         params = (remove_step, entry.get_entry_id())
