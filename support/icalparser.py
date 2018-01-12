@@ -101,7 +101,7 @@ class Connect():
                 event_dict['email'] = raw_values[4]
             if event_dict['guest'] not in ignore_guests:
                 out_list.append(event_dict)
-            print(event_dict)
+        print(out_list)
         return out_list
     def __recover_value(self, extract_line ,recover_tup, seperator=':', back_seperator=';'):
         out_dict = dict()
