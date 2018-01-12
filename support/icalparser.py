@@ -114,12 +114,10 @@ class Connect():
 
         return tuple(out_tup)
     def __date_clean(self, date):
-        print(date)
         year = int(date[0:4])
         month = int(date[4:6])
         day = int(date[6:8])
         seconds = date[9:]
-        print("{}/{}/{} {}".format(month, day, year, seconds))
         try:
             hour = int(int(seconds[:-1]) / 10000)
         except ValueError:
