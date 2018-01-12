@@ -92,7 +92,6 @@ class Connect():
         recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY', 'PHONE', 'EMAIL')
         for raw_event in self.__iter_events_raw():
             raw_values = self.__recover_value(raw_event, recover)
-            print(raw_values)
             event_dict = dict()
             event_dict['start'] = self.__abb_date_clean(raw_values[0])
             event_dict['end'] = self.__abb_date_clean(raw_values[1])
@@ -145,8 +144,10 @@ class Connect():
         out_list = list()
         recover = ('DTSTART', 'DTEND', 'SUMMARY')
         for raw_event in self.__iter_events_raw():
+
             event_dict = dict()
             raw_values = self.__recover_value(raw_event, recover)
+            print(raw_values)
             event_dict['start'] = self.__date_clean(raw_values[0])
             event_dict['end'] = self.__date_clean(raw_values[1])
             event_dict['guest'] = self.__vrbo_name_clean(raw_values[2])
