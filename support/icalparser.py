@@ -120,7 +120,10 @@ class Connect():
         day = int(date[6:8])
         seconds = date[9:]
         print("{}/{}/{} {}".format(month, day, year, seconds))
-        hour = int(int(seconds[:-1]) / 10000)
+        try:
+            hour = int(int(seconds[:-1]) / 10000)
+        except ValueError:
+            hour = 0
         dt = datetime.datetime(year, month, day, hour)
         return time.mktime(dt.timetuple())
     def __abb_date_clean(self, date):
