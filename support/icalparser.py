@@ -119,6 +119,7 @@ class Connect():
         month = int(date[4:6])
         day = int(date[6:8])
         seconds = date[9:]
+        print("{}/{}/{} {}".format(month, day, year, seconds))
         hour = int(int(seconds[:-1]) / 10000)
         dt = datetime.datetime(year, month, day, hour)
         return time.mktime(dt.timetuple())
