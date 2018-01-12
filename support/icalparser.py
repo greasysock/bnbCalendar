@@ -114,6 +114,7 @@ class Connect():
 
         return tuple(out_tup)
     def __date_clean(self, date):
+        print(date)
         year = int(date[0:4])
         month = int(date[4:6])
         day = int(date[6:8])
