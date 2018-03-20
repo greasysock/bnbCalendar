@@ -154,7 +154,11 @@ class Connect():
                 event_dict['end'] = self.__date_clean(raw_values[1])
             except ValueError:
                 skip = True
-            event_dict['guest'] = self.__vrbo_name_clean(raw_values[2])
+            try:
+                event_dict['guest'] = self.__vrbo_name_clean(raw_values[2])
+            except IndexError:
+                event_dict['guest'] = 'guest'
+                skip = True
             if event_dict['guest'] not in ignore_guests and not skip:
                 out_list.append(event_dict)
         return out_list
