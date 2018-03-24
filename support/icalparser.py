@@ -143,12 +143,11 @@ class Connect():
             return name
     def get_events_vrbo(self):
         out_list = list()
-        recover = ('DTSTART', 'DTEND', 'SUMMARY')
+        recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY')
         for raw_event in self.__iter_events_raw():
             skip = False
             event_dict = dict()
             raw_values = self.__recover_value(raw_event, recover)
-            print(raw_values)
             try:
                 event_dict['start'] = self.__date_clean(raw_values[0])
                 event_dict['end'] = self.__date_clean(raw_values[1])
