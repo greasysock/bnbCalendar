@@ -166,7 +166,7 @@ def main():
         db = calendardb.MainFile(default_calendar)
         for entry in db.iter_entries_objects():
             if str(entry.ical_id) == target_id:
-                print(entry.guest)
+                print("{} {} {}".format(entry.guest, entry.entry_id, entry.cleaning_entry))
 
     elif args.clear:
         db = calendardb.MainFile(default_calendar)
