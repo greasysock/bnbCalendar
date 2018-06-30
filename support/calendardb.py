@@ -393,6 +393,12 @@ class MainFile():
         self.save()
         return -1
 
+    def remove_listing(self, ical_id):
+        self.__c.execute("DELETE FROM listings WHERE \"ical id\" = '{}'".format(ical_id))
+        logging.info("Listing id '{}' removed from calendar database".format(ical_id))
+        self.save()
+        return -1
+
     def get_pending_teamwork_actions(self):
         pending_additions = 0
         pending_removals = 0
@@ -474,6 +480,7 @@ class MainFile():
             for entry in entries:
                 if entry.get_remove_log() == -1:
                     logging.info("No match found in ical for '{}'. Set to remove from teamwork.".format(entry.get_entry_id()))
+                    self.set_mark_remove(entry)
                     self.set_mark_remove(entry)
         self.set_listing_last_sync(listingobj)
         return out_value == 1
