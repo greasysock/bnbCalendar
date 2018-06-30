@@ -162,7 +162,7 @@ def main():
             print(out_form.format(listing[4], listing[0], listing[2]))
 
     elif args.remove_listing:
-        target_id = args.remove_listing
+        target_id = str(args.remove_listing)
         db = calendardb.MainFile(default_calendar)
         for entry in db.iter_entries_objects():
             if entry.ical_id == target_id:
