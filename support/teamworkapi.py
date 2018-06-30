@@ -64,12 +64,33 @@ class Connect():
         else:
             return -1
     def __get_calendarentries(self, startdate, enddate):
+
         site = self.__url_build('calendarevents.json')
-        fix_startdate = self.__epochtodate(startdate)
-        fix_enddate = self.__epochtodate(enddate)
-        payload = {'startdate':fix_startdate, 'endDate':fix_enddate}
-        r = requests.get(site, params=payload, auth=(self.__api_key, 'pass'), headers=self.__header)
-        return r.json()
+        payload = {'startdate':self.__epochtodate(startdate, type=1), 'endDate':self.__epochtodate(enddate, type=1)}
+        r = requests.get(site, params=payload,auth=self.__auth, headers=self.__header)
+        out_list = list()
+        print(r.headers)
+        pages_count = int(r.headers['X-Pages'])
+        current_page = int(r.headers['X-Page'])
+
+        rjson = r.json()
+        event_pages = list()
+        event_pages.append(rjson)
+        if pages_count > 1:
+            for page in range(pages_count):
+                if page+1 > current_page:
+                    target_page = page+1
+                    payload['page'] = target_page
+                    r = requests.get(site, params=payload, auth=self.__auth, headers=self.__header)
+                    rjson = r.json()
+                    event_pages.append(rjson)
+
+        for event_page in event_pages:
+            for event in event_page['events']:
+                out_list.append(event)
+
+        return out_list
+
     def get_calendarentries(self, startdate, enddate):
         if self.__connection:
             return self.__get_calendarentries(startdate, enddate)

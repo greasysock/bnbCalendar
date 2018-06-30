@@ -73,6 +73,7 @@ def main():
     parser.add_argument('-s', '--setup', help='Initializes db for daemon.', action='store_true', required=False )
     parser.add_argument('-n', '--new', help='Add new .ical to sync with teamwork.', metavar='\'.ics url\'')
     parser.add_argument('-r', '--run', help='Syncs calendar from airbnb and vrbo with teamwork.', action='store_true', required=False)
+    parser.add_argument('-l', '--list', help='Lists \'.ical\'s that are configured to sync with teamwork.', action='store_true', required=False)
     parser.add_argument('-R', '--remove', help='Remove company calendar from teamwork', metavar='\'Company ID\'')
     parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
     parser.add_argument('-b', '--backup', help='Backup listings to .csv file.', action='store_true', required=False)
@@ -153,6 +154,10 @@ def main():
             db.close()
         elif exists(lock_file):
             logging.warning('Lock file \'{}\' exists. Will not sync with teamwork until removed.'.format(lock_file))
+    elif args.list:
+        db = calendardb.MainFile(default_calendar)
+        for listing in db.iter_listings():
+            print(listing)
 
     elif args.clear:
         db = calendardb.MainFile(default_calendar)
