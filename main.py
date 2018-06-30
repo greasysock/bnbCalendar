@@ -165,7 +165,7 @@ def main():
         target_id = str(args.remove_listing)
         db = calendardb.MainFile(default_calendar)
         for entry in db.iter_entries_objects():
-            if entry.ical_id == target_id:
+            if str(entry.ical_id) == target_id:
                 print(entry.guest)
 
     elif args.clear:
