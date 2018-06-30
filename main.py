@@ -155,9 +155,10 @@ def main():
         elif exists(lock_file):
             logging.warning('Lock file \'{}\' exists. Will not sync with teamwork until removed.'.format(lock_file))
     elif args.list:
+        out_form = "{}\nid: {}\nlink:{}"
         db = calendardb.MainFile(default_calendar)
         for listing in db.iter_listings():
-            print(listing)
+            print(out_form.format(listing[4], listing[0], listing[2]))
 
     elif args.clear:
         db = calendardb.MainFile(default_calendar)
