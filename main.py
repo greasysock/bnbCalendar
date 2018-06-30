@@ -75,6 +75,7 @@ def main():
     parser.add_argument('-r', '--run', help='Syncs calendar from airbnb and vrbo with teamwork.', action='store_true', required=False)
     parser.add_argument('-l', '--list', help='Lists \'.ical\'s that are configured to sync with teamwork.', action='store_true', required=False)
     parser.add_argument('-R', '--remove', help='Remove company calendar from teamwork', metavar='\'Company ID\'')
+    parser.add_argument('-Rl', '--remove_listing', help='Remove listing and it\'s entries from teamwork', metavar='\'Listing ID\'')
     parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
     parser.add_argument('-b', '--backup', help='Backup listings to .csv file.', action='store_true', required=False)
     parser.add_argument('-e', '--event', nargs='+', help='Add new event to teamviewer.', metavar='name color')
@@ -155,7 +156,7 @@ def main():
         elif exists(lock_file):
             logging.warning('Lock file \'{}\' exists. Will not sync with teamwork until removed.'.format(lock_file))
     elif args.list:
-        out_form = "{}, id: \'{}\', {}\n"
+        out_form = "{}, id: \'{}\', {}"
         db = calendardb.MainFile(default_calendar)
         for listing in db.iter_listings():
             print(out_form.format(listing[4], listing[0], listing[2]))
