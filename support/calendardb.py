@@ -62,32 +62,85 @@ Description: wraps entry object from database for easier access.
 class entryObject():
     def __init__(self, entry):
         self.__entry = entry
+
     def get_ical_id(self):
         return self.__entry[0]
+    @property
+    def ical_id(self):
+        return self.get_ical_id()
+
     def get_start(self):
         return self.__entry[1]
+    @property
+    def start(self):
+        return self.get_start()
+
     def get_end(self):
         return self.__entry[2]
+    @property
+    def end(self):
+        return self.get_end()
+
     def get_amount(self):
         return self.__entry[3]
+    @property
+    def amount(self):
+        return self.get_amount()
+
     def get_guest(self):
         return self.__entry[4]
+    @property
+    def guest(self):
+        return self.get_guest()
+
     def get_service(self):
         return self.__entry[5]
+    @property
+    def service(self):
+        return self.get_service()
+
     def get_email(self):
         return self.__entry[6]
+    @property
+    def email(self):
+        return self.get_email()
+
     def get_phone(self):
         return self.__entry[7]
+    @property
+    def phone(self):
+        return self.get_phone()
+
     def get_posted(self):
         return self.__entry[8]
+    @property
+    def posted(self):
+        return self.get_posted()
+
     def get_delete(self):
         return self.__entry[9]
+    @property
+    def delete(self):
+        return self.get_delete()
+
     def get_post_id(self):
         return self.__entry[10]
+    @property
+    def post_id(self):
+        return self.get_post_id()
+
     def get_entry_id(self):
         return self.__entry[11]
+    @property
+    def entry_id(self):
+        return self.get_entry_id()
+
     def get_cleaning_entry(self):
         return self.__entry[12]
+    @property
+    def cleaning_entry(self):
+        return self.get_cleaning_entry()
+
     def set_remove_log(self, operation):
         try:
             self.__remove += operation

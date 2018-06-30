@@ -161,6 +161,13 @@ def main():
         for listing in db.iter_listings():
             print(out_form.format(listing[4], listing[0], listing[2]))
 
+    elif args.remove_listing:
+        target_id = args.remove_listing
+        db = calendardb.MainFile(default_calendar)
+        for entry in db.iter_entries_objects():
+            if entry.ical_id == target_id:
+                print(entry.guest)
+
     elif args.clear:
         db = calendardb.MainFile(default_calendar)
         teamwork = teamworkapi.Connect(teamwork_api)
