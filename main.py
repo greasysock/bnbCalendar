@@ -164,10 +164,13 @@ def main():
     elif args.remove_listing:
         target_id = str(args.remove_listing)
         db = calendardb.MainFile(default_calendar)
+        remove_events = list()
         for entry in db.iter_entries_objects():
             if str(entry.ical_id) == target_id:
                 print("{} {} {}".format(entry.guest, entry.post_id, entry.cleaning_entry))
-                db.set_mark_remove(entry)
+                remove_events.append(entry)
+        for entry in remove_events:
+            db.set_mark_remove(entry)
         db.remove_listing(target_id)
 
     elif args.clear:
