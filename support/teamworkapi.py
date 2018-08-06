@@ -136,6 +136,7 @@ class Connect():
 
         r = requests.post(site, json=payload,  auth=(self.__api_key, 'pass'), headers=self.__header)
 
+        print(r.text)
         rejson = r.json()
         try:
             if rejson['STATUS'] == 'OK':
