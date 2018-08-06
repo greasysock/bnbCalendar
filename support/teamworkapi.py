@@ -141,9 +141,10 @@ class Connect():
             if rejson['STATUS'] == 'OK':
                 return r.json()['id']
             else:
+                print("failed to upload: " + title)
+
                 return False
         except KeyError:
-            print("failed to upload: "+title)
             print(rejson)
             return False
     def post_calendarevent(self, entry_object):
