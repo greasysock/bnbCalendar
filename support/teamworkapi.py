@@ -143,6 +143,7 @@ class Connect():
             else:
                 return False
         except KeyError:
+            print("failed to upload: "+title)
             print(rejson)
             return False
     def post_calendarevent(self, entry_object):
