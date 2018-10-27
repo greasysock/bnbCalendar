@@ -18,17 +18,35 @@ class parentObject():
     def __init__(self, parent):
         self.__parent = parent
     def get_id(self):
-        return self.__parent[0]
+        try:
+            return self.__parent[0]
+        except TypeError:
+            return self.__parent
     def get_project_id(self):
-        return self.__parent[1]
+        try:
+            return self.__parent[1]
+        except TypeError:
+            return self.__parent
     def get_ical_link(self):
-        return self.__parent[2]
+        try:
+            return self.__parent[2]
+        except TypeError:
+            return self.__parent
     def get_event_id(self):
-        return self.__parent[3]
+        try:
+            return self.__parent[3]
+        except TypeError:
+            return self.__parent
     def get_event_name(self):
-        return self.__parent[4]
+        try:
+            return self.__parent[4]
+        except TypeError:
+            return self.__parent
     def get_last_sync(self):
-        return self.__parent[5]
+        try:
+            return self.__parent[5]
+        except TypeError:
+            return self.__parent
 
 class icalObject(parentObject):
     def __init__(self, listing, cutoff):
