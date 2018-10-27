@@ -47,8 +47,10 @@ class Connect():
         logging.info("removing: {}".format(site))
         if(str(event_id) == ""):
             return 1
-        r = requests.delete(site, auth=(self.__api_key, 'pass'), headers=self.__header)
-
+        try:
+            r = requests.delete(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+        except requests.ConnectionError:
+            return -1
         try:
             rejson = r.json()
             if rejson['STATUS'] == 'OK':
@@ -62,6 +64,7 @@ class Connect():
             return -1
     def remove_calendarevent(self, event_id):
         if self.__connection:
+            time.sleep(.2)
             return self.__remove_calendarevent(event_id)
         else:
             return -1
