@@ -189,9 +189,10 @@ class Connect():
                  "reminders":reminders}
 
         payload = {"event":event}
-
-        r = requests.post(site, json=payload,  auth=(self.__api_key, 'pass'), headers=self.__header)
-
+        try:
+            r = requests.post(site, json=payload,  auth=(self.__api_key, 'pass'), headers=self.__header)
+        except requests.ConnectionError:
+            return False
         rejson = r.json()
         try:
             if rejson['STATUS'] == 'OK':
