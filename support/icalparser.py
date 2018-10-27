@@ -1,4 +1,4 @@
-import requests, time, datetime
+import requests, time, datetime,logging
 from support import version
 
 __author__ = version.get_author()
@@ -19,6 +19,10 @@ class Connect():
             self.__raw_ical = repr(get_ical(self.__link))
         elif test:
             self.__raw_ical = repr(open('abbtest.ics', 'rb').read().decode('utf-8'))
+        t = self.test_cal()
+        if t == -1:
+            logging.warning("ical link invalid or net down. {}".format(link))
+            raise requests.ConnectionError()
     def __get_raw__events(self):
             for event in str(self.__raw_ical).split('\\'):
                 if event != '' and event != 'n':

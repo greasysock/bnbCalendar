@@ -5,6 +5,7 @@ __version__ = version.get_version()
 
 from random import randint
 import sqlite3, logging, time
+import requests.exceptions, logging
 
 
 '''
@@ -461,7 +462,10 @@ class MainFile():
     def sync_listing_ical(self, listingobj):
         listing = self.get_listing(listingobj.get_id())
         ical_object = icalObject(listing, self.get_cutoff())
-        ical_events = ical_object.get_events()
+        try:
+            ical_events = ical_object.get_events()
+        except requests.ConnectionError:
+            exit()
         entries = self.get_entries_listing(listingobj.get_id())
         logging.info("Listing '{}' Listing ID '{}'".format(ical_object.get_event_name(), ical_object.get_id()))
         out_value = 0

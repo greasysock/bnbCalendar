@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys, argparse, os, sqlite3, logging, csv, time
+import sys, argparse, os, sqlite3, logging, csv, time,requests
 from support import calendardb, version, icalparser, teamworkapi, prompts
 
 __title__ = version.get_title()
@@ -200,4 +200,9 @@ if __name__ == "__main__":
     lock_file = 'lock'
     backup_file = 'backup.csv'
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    try:
+        requests.get("http://www.google.com")
+    except requests.ConnectionError:
+        logging.error("Internet Down. Could not connect to google.")
+        exit()
     main()
