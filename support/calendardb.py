@@ -177,6 +177,7 @@ Class: entryparentObject
 Description: Adds parent data to entryObject class
 '''
 
+
 class entryparentObject(entryObject):
     def __init__(self, entry, parent):
         entryObject.__init__(self, entry)
