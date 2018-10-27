@@ -44,7 +44,9 @@ class Connect():
             return time.strftime('%Y%m%d', time.localtime(date))
     def __remove_calendarevent(self, event_id):
         site = self.__url_build('calendarevents/{}.json'.format(event_id))
-        print(site)
+        logging.info("removing: {}".format(site))
+        if(str(event_id) == ""):
+            return 1
         r = requests.delete(site, auth=(self.__api_key, 'pass'), headers=self.__header)
 
         try:
