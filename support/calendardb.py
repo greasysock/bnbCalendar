@@ -360,6 +360,8 @@ class MainFile():
         for entry in entries:
             if entry.get_delete() == 1 and entry.get_cleaning_entry() != '':
                 out_list_rem.append(entry)
+            elif entry.get_delete() == 1 and entry.get_post_id() == -1:
+                out_list_rem.append(entry)
             elif entry.get_posted() == 1 and entry.get_cleaning_entry() == '':
                 out_list_add.append(entry)
         return out_list_add, out_list_rem
