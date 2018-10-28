@@ -21,6 +21,7 @@ class Connect():
             self.__raw_ical = repr(open('abbtest.ics', 'rb').read().decode('utf-8'))
         t = self.test_cal()
         if t == -1:
+            logging.info(self.__raw_ical)
             logging.warning("ical link invalid or net down. {}".format(link))
             raise requests.ConnectionError()
     def __get_raw__events(self):
