@@ -194,7 +194,9 @@ class Connect():
         payload = {"event":event}
         try:
             r = requests.post(site, json=payload,  auth=(self.__api_key, 'pass'), headers=self.__header)
+            logging.info(r.text)
         except requests.ConnectionError:
+            time.sleep(.2)
             return False
         rejson = r.json()
         try:
