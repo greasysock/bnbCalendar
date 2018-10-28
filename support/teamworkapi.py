@@ -53,7 +53,7 @@ class Connect():
             return -1
         try:
             rejson = r.json()
-            if rejson['STATUS'] == 'OK':
+            if rejson['STATUS'] == 'OK' or rejson["MESSAGE"] == "Not Found":
                 return 1
             else:
                 return -1
