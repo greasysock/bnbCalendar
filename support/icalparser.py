@@ -8,7 +8,7 @@ __title__ = version.get_title()
 ignore_guests = ['Not available', 'Blocked']
 
 def get_ical(link):
-    head = {'user-agent' : '{}/{}'.format(__title__, __version__)}
+    head = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
     r = requests.get(link, headers=head, timeout=10)
     return r.content.decode('iso-8859-1')
 
