@@ -1,5 +1,5 @@
 __author__ = 'Christopher Gresock'
-__version__ = '0.1.3b'
+__version__ = '0.1.4'
 __title__ = 'bnbCalendar'
 
 def get_version():
