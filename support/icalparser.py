@@ -184,8 +184,3 @@ def test_ical(link):
         return test_con.test_cal()
     except:
         return -1
-if __name__ == "__main__":
-    CalendarE = Connect('https://www.airbnb.com/calendar/ical/11651866.ics?s=51fe1a87d1b0a8294164d35086888b5c', test=True)
-    events = CalendarE.get_events()
-    CalendarE.get_to_date(1495584000)
-    print(CalendarE.get_to_largest_date())
