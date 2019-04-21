@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys, argparse, os, sqlite3, logging, csv, time,requests
-from support import calendardb, version, icalparser, teamworkapi, prompts
+from support import calendardb, version, icalparser, teamworkapi, prompts, tw_logging
 
 __title__ = version.get_title()
 __author__ = version.get_author()
@@ -135,6 +135,10 @@ def main():
             connection.remove_calendarevent(entry['id'])
         return -1
     elif args.run:
+        teamwork = teamworkapi.Connect(teamwork_api)
+        cloud_logger = tw_logging.logger()
+        cloud_logger.set_teamwork(teamwork)
+        cloud_logger.set_log_level(tw_logging.LOG_LEVEL.ERROR)
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
         urllib3_logger = logging.getLogger('urllib3')
         urllib3_logger.setLevel(logging.WARNING)
@@ -150,7 +154,6 @@ def main():
                     logging.critical("Unusual amount of changes to file detected. Exiting until further notice.")
                     return
                 print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
-                teamwork = teamworkapi.Connect(teamwork_api)
                 teamwork.set_company(db.get_company_id())
                 db.sync_teamwork(teamwork)
             else:

@@ -1,16 +1,12 @@
 import requests, json, time, logging
 from support import version
-from enum import Enum
+
 __author__ = version.get_author()
 __version__ = version.get_version()
 __title__ = version.get_title()
 
 site = 'https://bnbwithme.teamwork.com'
 
-class LOG_LEVELS(Enum):
-    warning = "warning"
-    error = "error"
-    critical = "critical"
 
 # This ID is for the project that is the home for the calendar project. This will send messages when there are errors and warnings
 calendar_project = 376160
