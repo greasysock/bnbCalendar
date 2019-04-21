@@ -141,11 +141,26 @@ class Connect():
             return filter_name
         else:
             return name
+    def _abb_find_name(self, name):
+        # New abb parse method
+        start_index = None
+        end_index = None
+        for n, letter in enumerate(name):
+            if letter == "(":
+                start_index = n+1
+        if not start_index:
+            return 'Not available'
+        for m, letter in enumerate(name[start_index:]):
+            m = m+start_index
+            if letter == ")":
+                end_index = m
+        if not start_index:
+            return 'Not available'
+        #s = "Original \"{}\", Format \"{}\" [{}:{}]".format(name, name[start_index:end_index], start_index, end_index)
+        #print(s)
+        return name[start_index:end_index]
     def __abb_name_clean(self, name):
-        if name != 'Not available':
-            return name[:-13]
-        elif name == 'Not available':
-            return name
+        return self._abb_find_name(name)
     def get_events_vrbo(self):
         out_list = list()
         recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY')
