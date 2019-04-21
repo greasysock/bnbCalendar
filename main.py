@@ -78,7 +78,7 @@ def main():
     parser.add_argument('-Rl', '--remove_listing', help='Remove listing and it\'s entries from teamwork', metavar='\'Listing ID\'')
     parser.add_argument('-c', '--clear', help='Removes all entries from teamwork and database.', action='store_true', required=False)
     parser.add_argument('-b', '--backup', help='Backup listings to .csv file.', action='store_true', required=False)
-    parser.add_argument('-e', '--event', nargs='+', help='Add new event to teamviewer.', metavar='name color')
+    parser.add_argument('-e', '--event', nargs='+', help='Add new event to teamwork.', metavar='name color')
 
 
 
