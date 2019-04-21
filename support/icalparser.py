@@ -6,6 +6,7 @@ __version__ = version.get_version()
 __title__ = version.get_title()
 
 ignore_guests = ['Not available', 'Blocked']
+unnaccepted_chars = ['\'']
 
 def get_ical(link):
     head = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
@@ -135,12 +136,18 @@ class Connect():
         day = int(date[6:8])
         dt = datetime.datetime(year, month, day)
         return time.mktime(dt.timetuple())
+    def _filter_through_unaccepted(self, name):
+        out_name = ""
+        for c in name:
+            if c not in unnaccepted_chars:
+                out_name += c
+        return out_name
     def __vrbo_name_clean(self, name):
         filter_name = name [11:]
         if filter_name != '':
             return filter_name
         else:
-            return name
+            return self._filter_through_unaccepted(name)
     def _abb_find_name(self, name):
         # New abb parse method
         start_index = None
