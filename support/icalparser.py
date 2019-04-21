@@ -141,13 +141,15 @@ class Connect():
         for c in name:
             if c not in unnaccepted_chars:
                 out_name += c
+            else:
+                out_name += " "
         return out_name
     def __vrbo_name_clean(self, name):
         filter_name = name [11:]
         if filter_name != '':
-            return filter_name
+            return self._filter_through_unaccepted(filter_name)
         else:
-            return self._filter_through_unaccepted(name)
+            return name
     def _abb_find_name(self, name):
         # New abb parse method
         start_index = None
