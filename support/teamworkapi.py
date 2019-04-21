@@ -1,11 +1,19 @@
 import requests, json, time, logging
 from support import version
-
+from enum import Enum
 __author__ = version.get_author()
 __version__ = version.get_version()
 __title__ = version.get_title()
 
 site = 'https://bnbwithme.teamwork.com'
+
+class LOG_LEVELS(Enum):
+    warning = "warning"
+    error = "error"
+    critical = "critical"
+
+# This ID is for the project that is the home for the calendar project. This will send messages when there are errors and warnings
+calendar_project = 376160
 
 class Connect():
     def __init__(self, api_key, site=site):
@@ -152,6 +160,30 @@ class Connect():
                 return False
         except KeyError:
             print(rejson)
+            return False
+    def _post_message(self, title, body):
+        site = self.__url_build('projects/{}/posts.json'.format(calendar_project))
+        message = {
+            'post' : {
+                'title' : title,
+                'body' : body
+            }
+        }
+
+        r = requests.post(site, json=message, auth=(self.__api_key, 'pass'), headers=self.__header)
+        rejson = r.json()
+        try:
+            if rejson['STATUS'] == 'OK':
+                return r.json()['id']
+            else:
+                return False
+        except KeyError:
+            return False
+
+    def post_message(self, title, body):
+        if self.__connection:
+            return self._post_message(title, body)
+        else:
             return False
     def post_calendarevent(self, entry_object):
         if self.__connection:
