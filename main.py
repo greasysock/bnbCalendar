@@ -146,6 +146,9 @@ def main():
             if pending_additions > 0 or pending_removal > 0:
                 logging.info("{} pending additions to teamwork.".format(pending_additions))
                 logging.info("{} pending removals to teamwork.".format(pending_removal))
+                if (pending_removal > 10 or pending_additions > 10) and not exists(override_file):
+                    logging.critical("Unusual amount of changes to file detected. Exiting until further notice.")
+                    return
                 print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
                 teamwork = teamworkapi.Connect(teamwork_api)
                 teamwork.set_company(db.get_company_id())
@@ -198,6 +201,7 @@ def main():
                 backupwriter.writerow([listing[1],listing[2],listing[3],listing[4]])
 if __name__ == "__main__":
     lock_file = 'lock'
+    override_file = 'override'
     backup_file = 'backup.csv'
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     try:
