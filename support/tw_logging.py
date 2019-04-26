@@ -84,21 +84,33 @@ class logger:
             parent_id = self.get_category_id(self._parent_category)
             category_id = self.get_category_id(level, parent=parent_id)
             notify_users = []
-            if level.value >= self._notify_level:
+            if level.value >= self._notify_level.value:
                 notify_users = self.get_users_to_notify()
                 
             return self._teamwork.post_message(self._project_id, title, message,notify_user_ids=notify_users, category_id=category_id)
 
     def info(self, title:str, message:str):
-        return self.post_message(LOG_LEVEL.INFO, title, message)
+        try:
+            return self.post_message(LOG_LEVEL.INFO, title, message)
+        except:
+            pass
 
     def warning(self, title:str, message:str):
-        return self.post_message(LOG_LEVEL.WARNING, title, message)
+        try:
+            return self.post_message(LOG_LEVEL.WARNING, title, message)
+        except:
+            pass
 
     def error(self, title:str, message:str):
-        return self.post_message(LOG_LEVEL.ERROR, title, message)
+        try:
+            return self.post_message(LOG_LEVEL.ERROR, title, message)
+        except:
+            pass
 
     def critical(self, title:str, message:str):
-        return self.post_message(LOG_LEVEL.CRITICAL, title, message)
+        try:
+            return self.post_message(LOG_LEVEL.CRITICAL, title, message)
+        except:
+            pass
     
 log = logger()
