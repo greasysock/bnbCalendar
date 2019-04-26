@@ -11,13 +11,15 @@ level_names = {
     LOG_LEVEL.INFO : "Info",
     LOG_LEVEL.WARNING : "Warning",
     LOG_LEVEL.ERROR : "Error",
-    LOG_LEVEL.CRITICAL : "Critical"
+    LOG_LEVEL.CRITICAL : "Critical",
+    "logging" : "Logging"
 }
 
 class logger:
     _teamwork = None
     _log_level = None
     _project_id = 376160
+    _parent_category = "logging"
     _category_ids = {}
     _notify_users = None
     def set_teamwork(self, tw:teamworkapi.Connect):
@@ -31,7 +33,7 @@ class logger:
         self._project_id = project_id
 
     # Method to get category by string name or create a new category. Returns the id to use in message.
-    def get_category_id(self, level:LOG_LEVEL):
+    def get_category_id(self, level, parent=None):
         if level in self._category_ids:
             return self._category_ids[level]
         
@@ -50,7 +52,7 @@ class logger:
             self._category_ids[level] = category_id
             return category_id
         
-        category_id = self._teamwork.post_project_category(self._project_id, category_name)
+        category_id = self._teamwork.post_project_category(self._project_id, category_name, parent_id=parent)
         if category_id:
             self._category_ids[level] = category_id
             return category_id
@@ -72,8 +74,10 @@ class logger:
         if self._log_level is None:
             return
         elif level.value >= self._log_level.value:
-            category_id = self.get_category_id(level)
+            parent_id = self.get_category_id(self._parent_category)
+            category_id = self.get_category_id(level, parent=parent_id)
             notify_users = self.get_users_to_notify()
+            
             return self._teamwork.post_message(self._project_id, title, message,notify_user_ids=notify_users, category_id=category_id)
 
     def info(self, title:str, message:str):

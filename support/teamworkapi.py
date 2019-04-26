@@ -154,7 +154,7 @@ class Connect():
             print(rejson)
             return False
 
-    def _post_message(self,project_id , title, body, notify_user_ids=None, category_id=None):
+    def _post_message(self,project_id , title, body, notify_user_ids=[], category_id=None):
         site = self.__url_build('projects/{}/posts.json'.format(project_id))
         message = {
             'post' : {
@@ -167,6 +167,7 @@ class Connect():
 
         r = requests.post(site, json=message, auth=(self.__api_key, 'pass'), headers=self.__header)
         rejson = r.json()
+        print(rejson)
         try:
             if rejson['STATUS'] == 'OK':
                 return r.json()['id']
@@ -177,12 +178,12 @@ class Connect():
 
     def post_message(self, project_id, title, body, notify_user_ids=None, category_id=None):
         if self.__connection:
-            return self._post_message(project_id, title, body, notify_user_ids=None, category_id=None)
+            return self._post_message(project_id, title, body, category_id=category_id)
         else:
             return False
 
     def _get_project_categories(self, project_id):
-        site = self.__url_build("projectCategories.json")
+        site = self.__url_build("projects/{}/messageCategories.json".format(project_id))
         r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
         rejson = r.json()
         try:
@@ -199,28 +200,29 @@ class Connect():
             return self._get_project_categories(project_id)
         return False
 
-    def _post_project_category(self, project_id, name):
-        site = self.__url_build("projectCategories.json")
+    def _post_project_category(self, project_id, name, parent_id):
+        site = self.__url_build("projects/{}/messageCategories.json".format(project_id))
         message = {
             'category' : {
                 'name' : name,
-                'parent-id' : project_id
+                'parent-id' : parent_id
             }
         }
         r = requests.post(site, json=message, auth=(self.__api_key, 'pass'), headers=self.__header)
         rejson = r.json()
+        print(rejson)
         try:
             if rejson['STATUS'] == 'OK':
-                return rejson['id']
+                return rejson['categoryId']
             else:
                 return False
         except KeyError:
             return False
         return False
 
-    def post_project_category(self, project_id, name):
+    def post_project_category(self, project_id, name, parent_id=None):
         if self.__connection:
-            return self._post_project_category(project_id, name)
+            return self._post_project_category(project_id, name, parent_id)
         return False
 
     def post_calendarevent(self, entry_object):
