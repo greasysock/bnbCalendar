@@ -150,7 +150,7 @@ def main():
                 logging.info("{} pending removals to teamwork.".format(pending_removal))
                 if (pending_removal > 10 or pending_additions > 10) and not exists(override_file):
                     logging.critical("Unusual amount of changes to file detected. Exiting until further notice.")
-                    tw_logging.log.critical("Unusual Activity", "Unusual amount of changes to file detected. Will not sync to TeamWork until lock file is removed."
+                    tw_logging.log.critical("Unusual Activity", "Unusual amount of changes to file detected. Will not sync to TeamWork until lock file is removed.")
                     touch(lock_file)
                     return
                 print("There are '{}' pending additions to teamwork and '{}' pending removals to teamwork. Syncing now.".format(pending_additions, pending_removal))
