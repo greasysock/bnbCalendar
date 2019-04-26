@@ -1,5 +1,6 @@
 import requests, time, datetime,logging
 from support import version
+from support.tw_logging import log
 
 __author__ = version.get_author()
 __version__ = version.get_version()
@@ -24,6 +25,7 @@ class Connect():
         if t == -1:
             logging.info(self.__raw_ical)
             logging.warning("ical link invalid or net down. {}".format(link))
+            log.warning("ICAL Failed to Download", "Internet down or link invalid")
             raise requests.ConnectionError()
     def __get_raw__events(self):
             for event in str(self.__raw_ical).split('\\'):
@@ -158,18 +160,20 @@ class Connect():
             if letter == "(":
                 start_index = n+1
         if not start_index:
+            log.warning("AirBNB Entry Skipped", "Entry with title - {} - has been skipped".format(name))
             return 'Not available'
         for m, letter in enumerate(name[start_index:]):
             m = m+start_index
             if letter == ")":
                 end_index = m
         if not start_index:
+            log.warning("AirBNB Entry Skipped", "Entry with title - {} - has been skipped".format(name))
             return 'Not available'
-        #s = "Original \"{}\", Format \"{}\" [{}:{}]".format(name, name[start_index:end_index], start_index, end_index)
-        #print(s)
         return name[start_index:end_index]
+
     def __abb_name_clean(self, name):
         return self._abb_find_name(name)
+
     def get_events_vrbo(self):
         out_list = list()
         recover = ('DTSTART;VALUE=DATE', 'DTEND;VALUE=DATE', 'SUMMARY')
@@ -190,6 +194,7 @@ class Connect():
             if event_dict['guest'] not in ignore_guests and not skip:
                 out_list.append(event_dict)
         return out_list
+
     def __iter_events_raw(self):
         raw_list = self.get_raw_events_list()
         for idx, entry in enumerate(self.__get_raw__events()):
@@ -197,11 +202,13 @@ class Connect():
                 event_start = idx + 1
                 event_end = self.__get_end_eventidx(event_start)
                 yield self.__event_clean(raw_list[event_start:event_end])
+
     def get_events(self):
         if self.get_type() == 0:
             return self.get_events_abb()
         elif self.get_type() == 1:
             return self.get_events_vrbo()
+            
 def test_ical(link):
     try:
         test_con = Connect(link)

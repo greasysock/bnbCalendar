@@ -17,16 +17,23 @@ level_names = {
 
 class logger:
     _teamwork = None
-    _log_level = None
+    _log_level = LOG_LEVEL.WARNING
+    _notify_level = LOG_LEVEL.ERROR
     _project_id = 376160
     _parent_category = "logging"
     _category_ids = {}
     _notify_users = None
+
     def set_teamwork(self, tw:teamworkapi.Connect):
         self._teamwork = tw
     
+    # Sets level at which to upload to TeamWork
     def set_log_level(self, level:LOG_LEVEL):
         self._log_level = level
+
+    # Sets level at which users get notified
+    def set_notify_level(self, level:LOG_LEVEL):
+        self._notify_level = level
 
     # Project ID for logging messages
     def set_project_id(self, project_id:int):
@@ -76,8 +83,10 @@ class logger:
         elif level.value >= self._log_level.value:
             parent_id = self.get_category_id(self._parent_category)
             category_id = self.get_category_id(level, parent=parent_id)
-            notify_users = self.get_users_to_notify()
-            
+            notify_users = []
+            if level.value >= self._notify_level:
+                notify_users = self.get_users_to_notify()
+                
             return self._teamwork.post_message(self._project_id, title, message,notify_user_ids=notify_users, category_id=category_id)
 
     def info(self, title:str, message:str):

@@ -138,7 +138,7 @@ def main():
         teamwork = teamworkapi.Connect(teamwork_api)
         cloud_logger = tw_logging.logger()
         cloud_logger.set_teamwork(teamwork)
-        cloud_logger.set_log_level(tw_logging.LOG_LEVEL.ERROR)
+        cloud_logger.set_log_level(tw_logging.LOG_LEVEL.WARNING)
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
         urllib3_logger = logging.getLogger('urllib3')
         urllib3_logger.setLevel(logging.WARNING)

@@ -154,7 +154,7 @@ class Connect():
             print(rejson)
             return False
 
-    def _post_message(self,project_id , title, body, notify_user_ids=[], category_id=None):
+    def _post_message(self,project_id , title, body, notify_user_ids, category_id):
         site = self.__url_build('projects/{}/posts.json'.format(project_id))
         message = {
             'post' : {
@@ -176,9 +176,9 @@ class Connect():
         except KeyError:
             return False
 
-    def post_message(self, project_id, title, body, notify_user_ids=None, category_id=None):
+    def post_message(self, project_id, title, body, notify_user_ids=[], category_id=None):
         if self.__connection:
-            return self._post_message(project_id, title, body, category_id=category_id)
+            return self._post_message(project_id, title, body, notify_user_ids, category_id)
         else:
             return False
 

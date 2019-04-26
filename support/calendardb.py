@@ -1,5 +1,5 @@
 from support import version, icalparser
-
+from support.tw_logging import log
 __author__ = version.get_author()
 __version__ = version.get_version()
 
@@ -53,25 +53,20 @@ class icalObject(parentObject):
         parentObject.__init__(self,listing)
         self.__listing = listing
         self.__cutoff = cutoff
+        self.__parser = None
     def generate(self):
         self.__parser = icalparser.Connect(self.get_ical_link())
         return -1
     def get_type(self):
         return self.__parser.get_type()
     def get_events(self):
-        try:
-            events = self.__parser.get_to_date(self.__cutoff)
-            out_list = list()
-            for event in events:
-                out_list.append(entry_icalObject(event))
-            return out_list
-        except AttributeError:
+        if self.__parser == None:
             self.generate()
-            events = self.__parser.get_to_date(self.__cutoff)
-            out_list = list()
-            for event in events:
-                out_list.append(entry_icalObject(event))
-            return out_list
+        events = self.__parser.get_to_date(self.__cutoff)
+        out_list = list()
+        for event in events:
+            out_list.append(entry_icalObject(event))
+        return out_list
 
 '''
 Class: entryObject
@@ -410,6 +405,7 @@ class MainFile():
         try:
             self.__c.execute("INSERT INTO entries VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(ical_id, start_date, leave_date, amount, guest, service, email, phone, 0, 0, '', entry_id, ''))
         except sqlite3.OperationalError:
+            log.warning("Entry Skipped", "Entry with title - {} - has been skipped".format(guest))
             logging.info("Skipping:\n  Name: {}".format(guest))
             print('skipping')
     def set_mark_remove(self, entry, remove_step = 1):
