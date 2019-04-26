@@ -153,12 +153,15 @@ class Connect():
         except KeyError:
             print(rejson)
             return False
-    def _post_message(self,project_id , title, body):
+
+    def _post_message(self,project_id , title, body, notify_user_ids=None, category_id=None):
         site = self.__url_build('projects/{}/posts.json'.format(project_id))
         message = {
             'post' : {
                 'title' : title,
-                'body' : body
+                'body' : body,
+                'notify' : notify_user_ids,
+                'category-id' : category_id
             }
         }
 
@@ -174,13 +177,22 @@ class Connect():
 
     def post_message(self, project_id, title, body, notify_user_ids=None, category_id=None):
         if self.__connection:
-            return self._post_message(project_id, title, body)
+            return self._post_message(project_id, title, body, notify_user_ids=None, category_id=None)
         else:
             return False
 
     def _get_project_categories(self, project_id):
-        site = self.__url_build("")
-        pass
+        site = self.__url_build("projectCategories.json")
+        r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
+        rejson = r.json()
+        try:
+            if rejson['STATUS'] == 'OK':
+                return rejson
+            else:
+                return False
+        except KeyError:
+            return False
+        return False
 
     def get_project_categories(self, project_id):
         if self.__connection:
@@ -188,7 +200,23 @@ class Connect():
         return False
 
     def _post_project_category(self, project_id, name):
-        pass
+        site = self.__url_build("projectCategories.json")
+        message = {
+            'category' : {
+                'name' : name,
+                'parent-id' : project_id
+            }
+        }
+        r = requests.post(site, json=message, auth=(self.__api_key, 'pass'), headers=self.__header)
+        rejson = r.json()
+        try:
+            if rejson['STATUS'] == 'OK':
+                return rejson['id']
+            else:
+                return False
+        except KeyError:
+            return False
+        return False
 
     def post_project_category(self, project_id, name):
         if self.__connection:
@@ -272,9 +300,6 @@ class Connect():
         site = self.__url_build('projects/{}/people.json'.format(project_id))
         r = requests.get(site, auth=(self.__api_key, 'pass'), headers=self.__header)
         users_pack = r.json()
-        out_list = list()
-        for user in users_pack['people']:
-            out_tup = (user['id'], )
         return users_pack
     def get_users_on_project(self, project_id):
         if self.__connection:
