@@ -7,10 +7,6 @@ __title__ = version.get_title()
 
 site = 'https://bnbwithme.teamwork.com'
 
-
-# This ID is for the project that is the home for the calendar project. This will send messages when there are errors and warnings
-calendar_project = 376160
-
 class Connect():
     def __init__(self, api_key, site=site):
         self.__api_key = api_key
@@ -157,8 +153,8 @@ class Connect():
         except KeyError:
             print(rejson)
             return False
-    def _post_message(self, title, body):
-        site = self.__url_build('projects/{}/posts.json'.format(calendar_project))
+    def _post_message(self,project_id , title, body):
+        site = self.__url_build('projects/{}/posts.json'.format(project_id))
         message = {
             'post' : {
                 'title' : title,
@@ -176,11 +172,29 @@ class Connect():
         except KeyError:
             return False
 
-    def post_message(self, title, body):
+    def post_message(self, project_id, title, body, notify_user_ids=None, category_id=None):
         if self.__connection:
-            return self._post_message(title, body)
+            return self._post_message(project_id, title, body)
         else:
             return False
+
+    def _get_project_categories(self, project_id):
+        site = self.__url_build("")
+        pass
+
+    def get_project_categories(self, project_id):
+        if self.__connection:
+            return self._get_project_categories(project_id)
+        return False
+
+    def _post_project_category(self, project_id, name):
+        pass
+
+    def post_project_category(self, project_id, name):
+        if self.__connection:
+            return self._post_project_category(project_id, name)
+        return False
+
     def post_calendarevent(self, entry_object):
         if self.__connection:
             return self.__post_calendarevent(entry_object)
