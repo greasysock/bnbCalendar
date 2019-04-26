@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys, argparse, os, sqlite3, logging, csv, time,requests
-from support import calendardb, version, icalparser, teamworkapi, prompts, tw_logging
+from support import teamworkapi, tw_logging, calendardb, version, icalparser, prompts
 
 __title__ = version.get_title()
 __author__ = version.get_author()
@@ -136,9 +136,7 @@ def main():
         return -1
     elif args.run:
         teamwork = teamworkapi.Connect(teamwork_api)
-        cloud_logger = tw_logging.logger()
-        cloud_logger.set_teamwork(teamwork)
-        cloud_logger.set_log_level(tw_logging.LOG_LEVEL.WARNING)
+        tw_logging.log.set_teamwork(teamwork)
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename="run.log", level=logging.DEBUG)
         urllib3_logger = logging.getLogger('urllib3')
         urllib3_logger.setLevel(logging.WARNING)
