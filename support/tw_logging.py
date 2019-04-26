@@ -78,7 +78,7 @@ class logger:
             return self._notify_users
 
     def post_message(self, level:LOG_LEVEL, title:str, message:str):
-        if self._log_level is None:
+        if self._teamwork == None:
             return
         elif level.value >= self._log_level.value:
             parent_id = self.get_category_id(self._parent_category)
