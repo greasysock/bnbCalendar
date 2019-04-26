@@ -160,14 +160,14 @@ class Connect():
             if letter == "(":
                 start_index = n+1
         if not start_index:
-            log.warning("AirBNB Entry Skipped", "Entry with title - {} - has been skipped".format(name))
+            log.warning("AirBNB Entry Skipped", "Entry with title - {} - has been skipped. Link: {}".format(name, self.__link))
             return 'Not available'
         for m, letter in enumerate(name[start_index:]):
             m = m+start_index
             if letter == ")":
                 end_index = m
         if not start_index:
-            log.warning("AirBNB Entry Skipped", "Entry with title - {} - has been skipped".format(name))
+            log.warning("AirBNB Entry Skipped", "Entry with title - {} - has been skipped. Link {}".format(name, self.__link))
             return 'Not available'
         return name[start_index:end_index]
 
