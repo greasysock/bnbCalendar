@@ -25,7 +25,7 @@ class Connect():
         if t == -1:
             logging.info(self.__raw_ical)
             logging.warning("ical link invalid or net down. {}".format(link))
-            log.warning("ICAL Failed to Download", "Internet down or link invalid")
+            log.warning("ICAL Failed to Download", "Internet down or link invalid: {}".format(self.__link))
             raise requests.ConnectionError()
     def __get_raw__events(self):
             for event in str(self.__raw_ical).split('\\'):
