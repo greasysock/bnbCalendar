@@ -1,4 +1,4 @@
-# Depracated
+# Deprecated
 Replaced with [bnbwithme dashboard](https://github.com/greasysock/bnbwithme-dashboard) and [bnbwithme calendar](https://github.com/greasysock/bnbwithme-calendar) stack.
 
 # bnbCalendar
